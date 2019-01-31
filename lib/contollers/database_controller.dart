@@ -106,6 +106,10 @@ abstract class DatabaseController {
 
   set conversation(Conversation conversation);
 
+  set timetable(List<Lesson> timetable);
+
+  set groups(List<Group> groups);
+
   bool hasEnoughData();
 
   void clearData();
@@ -123,7 +127,6 @@ class DatabaseControllerImpl implements DatabaseController {
   static File _gradesFile = filesController.getFile("grades.json");
   static File _groupsFile = filesController.getFile("grades.json");
   static File _timetableFile = filesController.getFile("grades.json");
-  static String _profilePicturePath = "picture.jpg";
 
   DatabaseControllerImpl(SharedPreferences prefs) {
     ///it's easier to get it injected rather than messing it up trying to await it's future.
