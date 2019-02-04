@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mashov_api/mashov_api.dart';
 import 'package:unofficial_mashov/inject.dart';
+import 'package:unofficial_mashov/routes/home.dart';
 
 class LoginRoute extends StatefulWidget {
   final School school;
@@ -80,15 +81,47 @@ class LoginRouteState extends State<LoginRoute> {
                         setState(() {
                           done = false;
                           loginValue = null;
-                          loginFuture = MashovApi.getController().login(
+                          Inject.databaseController
+                            ..school = school
+                            ..username = _usernameController.text
+                            ..password = _passwordController.text
+                            ..year = year;
+                          loginFuture = Inject.apiController.login(
                               school,
                               _usernameController.text,
                               _passwordController.text,
                               year);
                           loginFuture.then((value) {
                             setState(() {
-                              loginValue = value;
-                              done = true;
+                              if (value.isOk) {
+                                LoginData data = value.value.data;
+                                Inject.databaseController
+                                  ..sessionId = data.sessionId
+                                  ..userId = data.userId;
+                                Inject.refreshController.refreshAll([
+                                  Api.Grades,
+                                  Api.Homework,
+                                  Api.Timetable,
+                                  Api.BehaveEvents
+                                ]);
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => HomeRoute()));
+                              } else {
+                                showDialog(
+                                    context: context, builder: (context) {
+                                  return SimpleDialog(
+                                    title: Inject.rtl(Text("ההתחברות נכשלה")),
+                                    children: <Widget>[
+                                      SimpleDialogOption(
+                                        child: Text("אוקיי"),
+                                        onPressed: () => Navigator.pop(context),
+                                      )
+                                    ],
+                                  );
+                                });
+                              }
                             });
                           });
                         });
@@ -100,8 +133,6 @@ class LoginRouteState extends State<LoginRoute> {
             ]));
     return Scaffold(
         appBar: AppBar(title: Text("התחברות למשוב"), centerTitle: true),
-        body: Inject.rtl(Container(
-            child: body,
-            margin: EdgeInsets.all(16))));
+        body: Inject.rtl(Container(child: body, margin: EdgeInsets.all(16))));
   }
 }

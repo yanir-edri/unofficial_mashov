@@ -1,10 +1,12 @@
 import 'dart:io';
+
 import 'package:path_provider/path_provider.dart';
 
 final filesController = new FilesController._new();
 
 class FilesController {
   Directory _messagesDir;
+  Directory _contactsDir;
   Directory _root;
 
   void _initStorage() {
@@ -13,6 +15,10 @@ class FilesController {
       _messagesDir = Directory("${_root.path}/messages");
       _messagesDir.exists().then((isExist) {
         if (!isExist) _messagesDir.create();
+      });
+      _contactsDir = Directory("${_root.path}/contacts");
+      _contactsDir.exists().then((isExist) {
+        if (!isExist) _contactsDir.create();
       });
     });
   }
@@ -33,6 +39,14 @@ class FilesController {
   File getConversationFile(String conversationId) {
     File file = File("${_messagesDir.path}/$conversationId.json");
     if(!file.existsSync()) {
+      file.createSync();
+    }
+    return file;
+  }
+
+  File getContactsGroupFile(String groupId) {
+    File file = File("${_contactsDir.path}/$groupId.json");
+    if (!file.existsSync()) {
       file.createSync();
     }
     return file;

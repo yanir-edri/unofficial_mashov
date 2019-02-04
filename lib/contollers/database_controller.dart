@@ -26,6 +26,8 @@ abstract class DatabaseController {
 
   String get sessionId;
 
+  String get userId;
+
   String get name;
 
   String get classCode;
@@ -52,6 +54,8 @@ abstract class DatabaseController {
 
   set sessionId(String value);
 
+  set userId(String value);
+
   set name(String value);
 
   set classCode(String value);
@@ -70,14 +74,6 @@ abstract class DatabaseController {
 
   set school(School value);
 
-//
-//  List<Grade> _grades;
-//  List<BehaveEvent> _behaveEvents;
-//  List<Group> _groups;
-//  List<Lesson> _timetable;
-//  List<Contact> _contacts;
-//  List<MessageTitle> _conversations;
-
   //getters
   List<Grade> get grades;
 
@@ -91,6 +87,12 @@ abstract class DatabaseController {
 
   List<MessageTitle> get conversations;
 
+  List<Maakav> get maakavReports;
+
+  List<Hatama> get hatamot;
+
+  List<Homework> get homework;
+
   Conversation getConversation(String conversationId);
 
   bool hasConversation(String conversationId);
@@ -102,6 +104,8 @@ abstract class DatabaseController {
 
   set contacts(List<Contact> contacts);
 
+  void setContactsGroup(List<Contact> contacts, int groupId);
+
   set conversations(List<MessageTitle> conversations);
 
   set conversation(Conversation conversation);
@@ -110,11 +114,18 @@ abstract class DatabaseController {
 
   set groups(List<Group> groups);
 
+  set maakavReports(List<Maakav> maakav);
+
+  set hatamot(List<Hatama> hatamot);
+
+  set homework(List<Homework> homework);
+
   bool hasEnoughData();
 
-  void clearData();
+  clearData();
 
-  void bulk(Function(DatabaseController controller) operation);
+
+  setLoginData(Login data);
 }
 
 class DatabaseControllerImpl implements DatabaseController {
@@ -123,10 +134,13 @@ class DatabaseControllerImpl implements DatabaseController {
   static File _conversationsFile =
       filesController.getFile("conversations.json");
   static File _behaveEventsFile = filesController.getFile("behave_events.json");
-  static File _contactsFile = filesController.getFile("contacts.json");
+  static File _contactsFile = filesController.getContactsGroupFile("default");
   static File _gradesFile = filesController.getFile("grades.json");
   static File _groupsFile = filesController.getFile("grades.json");
   static File _timetableFile = filesController.getFile("grades.json");
+  static File _maakavFile = filesController.getFile("maakav.json");
+  static File _hatamotFile = filesController.getFile("hatamot.json");
+  static File _homeworkFile = filesController.getFile("homework.json");
 
   DatabaseControllerImpl(SharedPreferences prefs) {
     ///it's easier to get it injected rather than messing it up trying to await it's future.
@@ -146,6 +160,8 @@ class DatabaseControllerImpl implements DatabaseController {
   String get username => _prefs.getString("username");
 
   String get sessionId => _prefs.getString("sessionId");
+
+  String get userId => _prefs.get("userId");
 
   String get name => _prefs.getString("name");
 
@@ -199,41 +215,45 @@ class DatabaseControllerImpl implements DatabaseController {
 
   set school(School value) => _prefs.setString("school", json.encode(value));
 
+  set userId(String value) => _prefs.setString("userId", value);
+
   ///end prefs
 
-  @override
-  void bulk(Function(DatabaseController controller) operation) =>
-      operation(this);
-
-  @override
-  void clearData() {
-    filesController.clear();
-    _prefs.clear();
-    fillPrefs();
-  }
 
   ///files
   @override
   List<BehaveEvent> get behaveEvents =>
-      getListFromFile(_behaveEventsFile, BehaveEvent.fromJson);
+      _getListFromFile(_behaveEventsFile, BehaveEvent.fromJson);
 
   @override
   List<Contact> get contacts =>
-      getListFromFile(_contactsFile, Contact.fromJson);
+      _getListFromFile(_contactsFile, Contact.fromJson);
 
   @override
   List<MessageTitle> get conversations =>
-      getListFromFile(_conversationsFile, MessageTitle.fromJson);
+      _getListFromFile(_conversationsFile, MessageTitle.fromJson);
 
   @override
-  List<Group> get groups => getListFromFile(_groupsFile, Group.fromJson);
+  List<Group> get groups => _getListFromFile(_groupsFile, Group.fromJson);
 
   @override
-  List<Grade> get grades => getListFromFile(_gradesFile, Grade.fromJson);
+  List<Grade> get grades => _getListFromFile(_gradesFile, Grade.fromJson);
 
   @override
   List<Lesson> get timetable =>
-      getListFromFile(_timetableFile, Lesson.fromJson);
+      _getListFromFile(_timetableFile, Lesson.fromJson);
+
+  @override
+  List<Maakav> get maakavReports =>
+      _getListFromFile(_maakavFile, Maakav.fromJson);
+
+  @override
+  List<Hatama> get hatamot =>
+      _getListFromFile(_hatamotFile, Hatama.fromJson);
+
+  @override
+  List<Homework> get homework =>
+      _getListFromFile(_homeworkFile, Homework.fromJson);
 
   @override
   set behaveEvents(List<BehaveEvent> value) =>
@@ -248,21 +268,32 @@ class DatabaseControllerImpl implements DatabaseController {
       setFile(_conversationsFile, json.encode(value));
 
   @override
-  set groups(List<Group> value) =>
-      setFile(_groupsFile, json.encode(value));
+  set groups(List<Group> value) => setFile(_groupsFile, json.encode(value));
 
   @override
-  set grades(List<Grade> value) =>
-      setFile(_gradesFile, json.encode(value));
+  set grades(List<Grade> value) => setFile(_gradesFile, json.encode(value));
 
-  @override set timetable(List<Lesson> value) =>
+  @override
+  set timetable(List<Lesson> value) =>
       setFile(_timetableFile, json.encode(value));
+
+  @override
+  set maakavReports(List<Maakav> value) =>
+      setFile(_maakavFile, json.encode(value));
+
+  @override
+  set hatamot(List<Hatama> value) =>
+      setFile(_hatamotFile, json.encode(value));
+
+  @override
+  set homework(List<Homework> value) =>
+      setFile(_homeworkFile, json.encode(value));
 
   @override
   set conversation(Conversation conversation) {
     File conversationFile =
         filesController.getConversationFile(conversation.conversationId);
-    conversationFile.writeAsString(json.encode(conversation), flush: true);
+    setFile(conversationFile, json.encode(conversation));
   }
 
   @override
@@ -275,16 +306,15 @@ class DatabaseControllerImpl implements DatabaseController {
 
   ///end files
 
-
   /// some nice utility functions
 
-  List<E> parseList<E>(List list, Parser<E> parser) {
+  List<E> _parseList<E>(List list, Parser<E> parser) {
     return list.map<E>((item) => parser(item)).toList();
   }
 
-  List<E> getListFromFile<E>(File f, Parser<E> parser) {
+  List<E> _getListFromFile<E>(File f, Parser<E> parser) {
     String contents = f.readAsStringSync();
-    return contents.isEmpty ? null : parseList(json.decode(contents), parser);
+    return contents.isEmpty ? null : _parseList(json.decode(contents), parser);
   }
 
   @override
@@ -298,6 +328,7 @@ class DatabaseControllerImpl implements DatabaseController {
       _groupsFile.existsSync() &&
       _gradesFile.existsSync() &&
       _behaveEventsFile.existsSync() &&
+          _maakavFile.existsSync() &&
       _conversationsFile.existsSync();
 
   void fillPrefsWithEmptyStrings() {
@@ -306,6 +337,7 @@ class DatabaseControllerImpl implements DatabaseController {
       "password",
       "username",
       "sessionId",
+      "userId",
       "name",
       "classCode",
       "csrfToken",
@@ -343,6 +375,27 @@ class DatabaseControllerImpl implements DatabaseController {
     if (value == null || value.isEmpty)
       f.writeAsStringSync("");
     else
-      f.writeAsStringSync(json.encode(value));
+      f.writeAsStringSync(value);
   }
+
+  @override
+  void setContactsGroup(List<Contact> contacts, int groupId) {
+    File contactsFile = filesController.getContactsGroupFile("$groupId");
+    setFile(contactsFile, json.encode(contacts));
+  }
+
+  @override
+  void clearData() {
+    filesController.clear();
+    _prefs.clear();
+    fillPrefs();
+  }
+
+  @override
+  setLoginData(Login data) {
+    userId = data.data.userId;
+    sessionId = data.data.sessionId;
+    year = data.data.year;
+  }
+
 }

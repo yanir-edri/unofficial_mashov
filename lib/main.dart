@@ -1,15 +1,16 @@
-import 'package:unofficial_mashov/inject.dart';
 import 'package:flutter/material.dart';
+import 'package:unofficial_mashov/inject.dart';
 import 'package:unofficial_mashov/routes/login/school.dart';
 
-void main() {
-  runApp(new MaterialApp(home: MyApp()));
-}
+void main() =>
+    runApp(
+        MaterialApp(home: MyApp()
+        )
+    );
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-//    _getSchools(context);
     return Scaffold(
         appBar: AppBar(title: Text("משוב"), centerTitle: true),
         body: Container(
@@ -18,6 +19,7 @@ class MyApp extends StatelessWidget {
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
                     if (snapshot.data) return ChooseSchoolRoute();
+
                     return AlertDialog(
                         title: Text("ההתחברות לשרת המשוב נכשלה"),
                         actions: <Widget>[
