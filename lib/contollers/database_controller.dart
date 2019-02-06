@@ -77,13 +77,15 @@ abstract class DatabaseController {
   //getters
   List<Grade> get grades;
 
+  List<BagrutGrade> get bagrutGrades;
+
   List<BehaveEvent> get behaveEvents;
 
   List<Group> get groups;
 
   List<Lesson> get timetable;
 
-  List<Contact> get contacts;
+  List<Contact> getContacts({int groupId = -1});
 
   List<MessageTitle> get conversations;
 
@@ -93,22 +95,24 @@ abstract class DatabaseController {
 
   List<Homework> get homework;
 
-  Conversation getConversation(String conversationId);
+  Future<Conversation> getConversation(String conversationId);
 
-  bool hasConversation(String conversationId);
+  Future<bool> hasConversation(String conversationId);
 
   //setters
   set grades(List<Grade> grades);
+
+  set bagrutGrades(List<BagrutGrade> bagrutGrades);
 
   set behaveEvents(List<BehaveEvent> behaveEvents);
 
   set contacts(List<Contact> contacts);
 
-  void setContactsGroup(List<Contact> contacts, int groupId);
+  Future<bool> setContactsGroup(List<Contact> contacts, int groupId);
 
   set conversations(List<MessageTitle> conversations);
 
-  set conversation(Conversation conversation);
+  void setConversation(Conversation conversation);
 
   set timetable(List<Lesson> timetable);
 
@@ -120,10 +124,13 @@ abstract class DatabaseController {
 
   set homework(List<Homework> homework);
 
-  bool hasEnoughData();
+  Future<bool> hasEnoughData();
 
   clearData();
 
+  List getApiData(Api api, {Map data});
+
+  Future<bool> init();
 
   setLoginData(Login data);
 }
@@ -131,16 +138,52 @@ abstract class DatabaseController {
 class DatabaseControllerImpl implements DatabaseController {
   SharedPreferences _prefs;
 
-  static File _conversationsFile =
-      filesController.getFile("conversations.json");
-  static File _behaveEventsFile = filesController.getFile("behave_events.json");
-  static File _contactsFile = filesController.getContactsGroupFile("default");
-  static File _gradesFile = filesController.getFile("grades.json");
-  static File _groupsFile = filesController.getFile("grades.json");
-  static File _timetableFile = filesController.getFile("grades.json");
-  static File _maakavFile = filesController.getFile("maakav.json");
-  static File _hatamotFile = filesController.getFile("hatamot.json");
-  static File _homeworkFile = filesController.getFile("homework.json");
+  static File _conversationsFile;
+  static File _behaveEventsFile;
+  static File _contactsFile;
+  static File _gradesFile;
+  static File _bagrutGradesFile;
+  static File _groupsFile;
+  static File _timetableFile;
+  static File _maakavFile;
+  static File _hatamotFile;
+  static File _homeworkFile;
+
+  ///Returns true if successful, false otherwise.
+  @override
+  Future<bool> init() =>
+      Future.wait<File>([
+        filesController
+            .getFile("conversations.json")
+            .then((file) => _conversationsFile = file),
+        filesController
+            .getFile("behave_events.json")
+            .then((file) => _behaveEventsFile = file),
+        filesController
+            .getContactsGroupFile("default")
+            .then((file) => _contactsFile = file),
+        filesController
+            .getFile("grades.json")
+            .then((file) => _gradesFile = file),
+        filesController
+            .getFile("bagrut.json")
+            .then((file) => _bagrutGradesFile = file),
+        filesController
+            .getFile("groups.json")
+            .then((file) => _groupsFile = file),
+        filesController
+            .getFile("timetable.json")
+            .then((file) => _timetableFile = file),
+        filesController
+            .getFile("maakav.json")
+            .then((file) => _maakavFile = file),
+        filesController
+            .getFile("hatamot.json")
+            .then((file) => _hatamotFile = file),
+        filesController
+            .getFile("homework.json")
+            .then((file) => _homeworkFile = file),
+      ]).then((list) => true).catchError((error) => false);
 
   DatabaseControllerImpl(SharedPreferences prefs) {
     ///it's easier to get it injected rather than messing it up trying to await it's future.
@@ -219,15 +262,18 @@ class DatabaseControllerImpl implements DatabaseController {
 
   ///end prefs
 
-
   ///files
   @override
   List<BehaveEvent> get behaveEvents =>
       _getListFromFile(_behaveEventsFile, BehaveEvent.fromJson);
 
   @override
-  List<Contact> get contacts =>
-      _getListFromFile(_contactsFile, Contact.fromJson);
+  List<Contact> getContacts({int groupId = -1}) =>
+      _getListFromFile(
+          groupId == -1
+              ? _contactsFile
+              : filesController.getContactsGroupFile("$groupId"),
+          Contact.fromJson);
 
   @override
   List<MessageTitle> get conversations =>
@@ -240,6 +286,10 @@ class DatabaseControllerImpl implements DatabaseController {
   List<Grade> get grades => _getListFromFile(_gradesFile, Grade.fromJson);
 
   @override
+  List<BagrutGrade> get bagrutGrades =>
+      _getListFromFile(_bagrutGradesFile, BagrutGrade.fromJson);
+
+  @override
   List<Lesson> get timetable =>
       _getListFromFile(_timetableFile, Lesson.fromJson);
 
@@ -248,8 +298,7 @@ class DatabaseControllerImpl implements DatabaseController {
       _getListFromFile(_maakavFile, Maakav.fromJson);
 
   @override
-  List<Hatama> get hatamot =>
-      _getListFromFile(_hatamotFile, Hatama.fromJson);
+  List<Hatama> get hatamot => _getListFromFile(_hatamotFile, Hatama.fromJson);
 
   @override
   List<Homework> get homework =>
@@ -257,51 +306,57 @@ class DatabaseControllerImpl implements DatabaseController {
 
   @override
   set behaveEvents(List<BehaveEvent> value) =>
-      setFile(_behaveEventsFile, json.encode(value));
+      _setFile(_behaveEventsFile, json.encode(value));
 
   @override
   set contacts(List<Contact> value) =>
-      setFile(_contactsFile, json.encode(value));
+      _setFile(_contactsFile, json.encode(value));
 
   @override
   set conversations(List<MessageTitle> value) =>
-      setFile(_conversationsFile, json.encode(value));
+      _setFile(_conversationsFile, json.encode(value));
 
   @override
-  set groups(List<Group> value) => setFile(_groupsFile, json.encode(value));
+  set groups(List<Group> value) => _setFile(_groupsFile, json.encode(value));
 
   @override
-  set grades(List<Grade> value) => setFile(_gradesFile, json.encode(value));
+  set grades(List<Grade> value) => _setFile(_gradesFile, json.encode(value));
+
+  @override
+  set bagrutGrades(List<BagrutGrade> value) =>
+      _setFile(_bagrutGradesFile, json.encode(value));
 
   @override
   set timetable(List<Lesson> value) =>
-      setFile(_timetableFile, json.encode(value));
+      _setFile(_timetableFile, json.encode(value));
 
   @override
   set maakavReports(List<Maakav> value) =>
-      setFile(_maakavFile, json.encode(value));
+      _setFile(_maakavFile, json.encode(value));
 
   @override
-  set hatamot(List<Hatama> value) =>
-      setFile(_hatamotFile, json.encode(value));
+  set hatamot(List<Hatama> value) => _setFile(_hatamotFile, json.encode(value));
 
   @override
   set homework(List<Homework> value) =>
-      setFile(_homeworkFile, json.encode(value));
+      _setFile(_homeworkFile, json.encode(value));
 
   @override
-  set conversation(Conversation conversation) {
-    File conversationFile =
-        filesController.getConversationFile(conversation.conversationId);
-    setFile(conversationFile, json.encode(conversation));
+  setConversation(Conversation conversation) {
+    filesController
+        .getConversationFile(conversation.conversationId)
+        .then((file) {
+      _setFile(file, json.encode(conversation));
+    }).then((n) => true);
   }
 
   @override
-  Conversation getConversation(String conversationId) {
-    File conversationFile = filesController.getConversationFile(conversationId);
-    String contents = conversationFile.readAsStringSync();
-    if (contents.isEmpty) return null;
-    return Conversation.fromJson(json.decode(contents));
+  Future<Conversation> getConversation(String conversationId) async {
+    return filesController.getConversationFile(conversationId).then((file) =>
+        _tryRead(file).then((contents) =>
+        contents.isNotEmpty
+            ? Conversation.fromJson(json.decode(contents))
+            : null));
   }
 
   ///end files
@@ -314,22 +369,33 @@ class DatabaseControllerImpl implements DatabaseController {
 
   List<E> _getListFromFile<E>(File f, Parser<E> parser) {
     String contents = f.readAsStringSync();
-    return contents.isEmpty ? null : _parseList(json.decode(contents), parser);
+    return contents.isNotEmpty
+        ? _parseList(json.decode(contents), parser)
+        : List();
+//    return _tryRead(f).then((contents) => contents.isNotEmpty
+//          ? _parseList(json.decode(contents), parser)
+//          : null);
   }
 
   @override
-  bool hasConversation(String conversationId) =>
-      filesController.getConversationFile(conversationId).existsSync();
+  Future<bool> hasConversation(String conversationId) =>
+      filesController
+          .getConversationFile(conversationId)
+          .then((file) => file.exists())
+          .catchError((error) => false);
 
   @override
-  bool hasEnoughData() =>
-      File(profilePicturePath).existsSync() &&
-      _timetableFile.existsSync() &&
-      _groupsFile.existsSync() &&
-      _gradesFile.existsSync() &&
-      _behaveEventsFile.existsSync() &&
-          _maakavFile.existsSync() &&
-      _conversationsFile.existsSync();
+  Future<bool> hasEnoughData() =>
+      Future.wait([
+        File(profilePicturePath).exists(),
+        _timetableFile.exists(),
+        _groupsFile.exists(),
+        _gradesFile.exists(),
+        _bagrutGradesFile.exists(),
+        _behaveEventsFile.exists(),
+        _maakavFile.exists(),
+        _conversationsFile.exists()
+      ]).then((areExisting) => _all(areExisting));
 
   void fillPrefsWithEmptyStrings() {
     const keys = [
@@ -371,18 +437,18 @@ class DatabaseControllerImpl implements DatabaseController {
     }
   }
 
-  void setFile(File f, String value) {
-    if (value == null || value.isEmpty)
-      f.writeAsStringSync("");
-    else
-      f.writeAsStringSync(value);
-  }
+  Future<bool> _setFile(File f, String value) async =>
+      f
+          .writeAsString((value == null || value.isEmpty) ? "" : value)
+          .then((file) => true)
+          .catchError((error) => false);
 
   @override
-  void setContactsGroup(List<Contact> contacts, int groupId) {
-    File contactsFile = filesController.getContactsGroupFile("$groupId");
-    setFile(contactsFile, json.encode(contacts));
-  }
+  Future<bool> setContactsGroup(List<Contact> contacts, int groupId) async =>
+      filesController
+          .getContactsGroupFile("$groupId")
+          .then((file) => _setFile(file, json.encode(contacts)))
+          .catchError((error) => false);
 
   @override
   void clearData() {
@@ -398,4 +464,48 @@ class DatabaseControllerImpl implements DatabaseController {
     year = data.data.year;
   }
 
+  @override
+  List getApiData(Api api, {Map data}) {
+    switch (api) {
+      case Api.Homework:
+        return homework;
+      case Api.Grades:
+        return grades;
+      case Api.Groups:
+        return groups;
+      case Api.Timetable:
+        return timetable;
+      case Api.Alfon:
+        if (data != null) if (data.containsKey("groupId"))
+          return getContacts(groupId: data["groupId"]);
+        return getContacts();
+      case Api.BagrutGrades:
+        return bagrutGrades;
+      case Api.BehaveEvents:
+        return behaveEvents;
+      case Api.Messages:
+      //TODO: older messages handling(?)
+        return conversations;
+      case Api.Maakav:
+        return maakavReports;
+      case Api.Hatamot:
+        return hatamot;
+      default:
+        print(
+            "error: trying to get list api ${api
+                .toString()} $api. returning grades");
+        return grades;
+    }
+  }
+
+  Future<String> _tryRead(File f) async {
+    try {
+      return await f.readAsString();
+    } catch (e) {
+      print(e);
+      return "";
+    }
+  }
+
+  bool _all(List<bool> booleans) => booleans.every((bool) => bool);
 }

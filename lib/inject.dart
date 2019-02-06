@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mashov_api/mashov_api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unofficial_mashov/contollers/database_controller.dart';
+import 'package:unofficial_mashov/contollers/files_controller.dart';
 import 'package:unofficial_mashov/contollers/refresh_controller.dart';
 class Inject {
   static ApiController _apiController = MashovApi.getController();
@@ -10,24 +11,32 @@ class Inject {
   static RefreshController _refreshController;
   static List<School> _schools = List();
 
+  static Future<bool> isConnected() =>
+      Connectivity().checkConnectivity().then((result) =>
+      result !=
+          ConnectivityResult.none).catchError((error) => false);
+
   static Future<bool> setup() =>
-      Connectivity().checkConnectivity()
-          .then((connectivityResult) =>
-      connectivityResult != ConnectivityResult.none)
-          .then((isConnected) {
-        if (!isConnected) return false;
+      isConnected().then((connected) {
+        if (!connected) return false;
+
         return SharedPreferences.getInstance().then((prefs) {
           _databaseController = DatabaseControllerImpl(prefs);
           _refreshController = RefreshController();
-          return _apiController.getSchools().then((result) {
-            if (result.isSuccess) {
-              _schools = result.value;
-              return true;
-            }
-            return false;
-          }).catchError((error) => false);
-        }).catchError((error) => false);
+          return filesController.initStorage();
+        }).then((n) => _databaseController.init())
+            .then((successful) =>
+        !successful ? false : _apiController.getSchools().then((result) {
+          if (result.isSuccess) {
+            print("we got schools");
+            _schools = result.value;
+            return true;
+          }
+          print("we didn't get schools");
+          return false;
+        }));
       });
+
 
   static List<School> get schools => _schools;
 

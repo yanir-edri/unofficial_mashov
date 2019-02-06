@@ -18,6 +18,7 @@ class MyApp extends StatelessWidget {
                 future: Inject.setup(),
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
+                    print("snapshot.data equals ${snapshot.data}");
                     if (snapshot.data) return ChooseSchoolRoute();
 
                     return AlertDialog(

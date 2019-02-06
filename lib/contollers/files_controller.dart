@@ -9,8 +9,9 @@ class FilesController {
   Directory _contactsDir;
   Directory _root;
 
-  void _initStorage() {
-    getApplicationDocumentsDirectory().then((directory) {
+  Future<bool> initStorage() {
+    print("storage is initializing");
+    return getApplicationDocumentsDirectory().then((directory) {
       _root = directory;
       _messagesDir = Directory("${_root.path}/messages");
       _messagesDir.exists().then((isExist) {
@@ -20,23 +21,24 @@ class FilesController {
       _contactsDir.exists().then((isExist) {
         if (!isExist) _contactsDir.create();
       });
-    });
+      print("storage is done initializing");
+    }).then((n) => true).catchError((error) => false);
   }
 
   FilesController._new() {
-    _initStorage();
   }
 
-  //Returns file with the name given, false otherwise
-  File getFile(String name) {
+  //Returns file with the name given,
+  Future<File> getFile(String name) async {
     //if contains file
     File file = File("${_root.path}/$name");
-    if(!file.existsSync()) {
-      file.createSync();
-    }
-    return file;
+    return file.exists().then((exists) {
+      if (exists) return file;
+      return file.create();
+    });
   }
-  File getConversationFile(String conversationId) {
+
+  Future<File> getConversationFile(String conversationId) async {
     File file = File("${_messagesDir.path}/$conversationId.json");
     if(!file.existsSync()) {
       file.createSync();
@@ -44,15 +46,16 @@ class FilesController {
     return file;
   }
 
-  File getContactsGroupFile(String groupId) {
+  Future<File> getContactsGroupFile(String groupId) async {
     File file = File("${_contactsDir.path}/$groupId.json");
+
     if (!file.existsSync()) {
       file.createSync();
     }
     return file;
   }
 
-  void clear() {
+  void clear() async {
     _root.delete(recursive: true);
     _root.create().then((dir) => _messagesDir.create());
   }

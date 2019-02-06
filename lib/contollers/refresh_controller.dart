@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 import 'package:mashov_api/mashov_api.dart';
 import 'package:unofficial_mashov/contollers/database_controller.dart';
 import 'package:unofficial_mashov/inject.dart';
@@ -7,16 +5,17 @@ import 'package:unofficial_mashov/inject.dart';
 class RefreshController {
   ApiController _apiController;
   DatabaseController _databaseController;
-  HashMap<int, Callback> callbacks = HashMap();
-  List<Api> runningRequests = List();
-  List<Api> queuedRequests = List();
-  bool isPerformingLogin = false;
-  bool shouldPerformLogin = false;
+  List<Callback> _callbacks = List();
+  List<Api> _runningRequests = List();
+  List<Api> _queuedRequests = List();
+  bool _isPerformingLogin = false;
+  bool _shouldPerformLogin = false;
 
   RefreshController() {
     _apiController = Inject.apiController;
     _databaseController = Inject.databaseController;
     _apiController.attachDataProcessor((dynamic data, Api api) {
+      print("proccessing data on api $api");
       switch (api) {
         case Api.Grades:
           _databaseController.grades = data;
@@ -36,10 +35,10 @@ class RefreshController {
           _databaseController.contacts = data;
           break;
         case Api.Messages:
-          _databaseController.conversation = data;
+          _databaseController.conversations = data;
           break;
         case Api.Message:
-          _databaseController.conversation = data;
+          _databaseController.setConversation(data);
           break;
         case Api.Maakav:
           _databaseController.maakavReports = data;
@@ -60,14 +59,14 @@ class RefreshController {
   }
 
   bool refresh(Api api, {Map data}) {
-    if (shouldPerformLogin) {
-      queuedRequests.add(api);
+    if (_shouldPerformLogin) {
+      _queuedRequests.add(api);
       login();
     }
-    if (runningRequests.contains(api) || queuedRequests.contains(api))
+    if (_runningRequests.contains(api) || _queuedRequests.contains(api))
       return false;
-    if (isPerformingLogin) {
-      queuedRequests.add(api);
+    if (_isPerformingLogin) {
+      _queuedRequests.add(api);
       return false;
     } else {
       refreshInternal(api, data: data);
@@ -80,7 +79,7 @@ class RefreshController {
   }
 
   refreshInternal(Api api, {Map data}) {
-    runningRequests.add(api);
+    _runningRequests.add(api);
     Future<Result> request;
     String userId = _databaseController.userId;
     switch (api) {
@@ -108,32 +107,33 @@ class RefreshController {
       default:
         break;
     }
+    print("request==null is ${request == null}");
     if (request != null) {
       request.then((result) {
         if (result.isSuccess) {
-          runningRequests.remove(api);
-          callbacks.values.forEach((c) => c.onSuccess(api));
+          _runningRequests.remove(api);
+          _callbacks.forEach((c) => c.onSuccess(api));
         } else if (result.isNeedToLogin) {
           login();
         } else if (result.isForbidden) {
-          runningRequests.remove(api);
-          callbacks.values.forEach((c) => c.onSuspend());
+          _runningRequests.remove(api);
+          _callbacks.forEach((c) => c.onSuspend());
         } else {
-          runningRequests.remove(api);
-          callbacks.values.forEach((c) => c.onFail(api));
+          _runningRequests.remove(api);
+          _callbacks.forEach((c) => c.onFail(api));
         }
       });
     }
   }
 
   login() {
-    if (!isPerformingLogin) {
-      isPerformingLogin = true;
-      queuedRequests += runningRequests;
-      runningRequests.clear();
+    if (!_isPerformingLogin) {
+      _isPerformingLogin = true;
+      _queuedRequests += _runningRequests;
+      _runningRequests.clear();
       _apiController
           .login(_databaseController.school, _databaseController.username,
-              _databaseController.password, _databaseController.year)
+          _databaseController.password, _databaseController.year)
           .then((result) {
         if (result.isSuccess) {
           Login login = result.value;
@@ -141,23 +141,23 @@ class RefreshController {
             _databaseController
               ..sessionId = login.data.sessionId
               ..year = login.data.year;
-            isPerformingLogin = false;
-            shouldPerformLogin = false;
-            queuedRequests.forEach((api) => refreshInternal(api));
-            queuedRequests.clear();
+            _isPerformingLogin = false;
+            _shouldPerformLogin = false;
+            _queuedRequests.forEach((api) => refreshInternal(api));
+            _queuedRequests.clear();
           } else {
-            isPerformingLogin = false;
-            shouldPerformLogin = false;
-            queuedRequests.clear();
-            runningRequests.clear();
+            _isPerformingLogin = false;
+            _shouldPerformLogin = false;
+            _queuedRequests.clear();
+            _runningRequests.clear();
             if (result.isNeedToLogin) {
               _databaseController.clearData();
-              callbacks.values.forEach((c) => c.onUnauthorized());
+              _callbacks.forEach((c) => c.onUnauthorized());
             } else if (result.isForbidden) {
-              callbacks.values.forEach((c) => c.onSuspend());
+              _callbacks.forEach((c) => c.onSuspend());
             } else {
-              shouldPerformLogin = true;
-              callbacks.values.forEach((c) => c.onLoginFail());
+              _shouldPerformLogin = true;
+              _callbacks.forEach((c) => c.onLoginFail());
             }
           }
         } else {
@@ -167,13 +167,19 @@ class RefreshController {
     }
   }
 
-  attachCallback(int id, Callback callback) {
-    callbacks[id] = callback;
+  attach(Callback callback) {
+    print("attaching callback");
+    detach(callback);
+    _callbacks.add(callback);
   }
 
-  detachCallback(int id) {
-    callbacks.remove(callbacks[id]);
+  detach(Callback callback) {
+    if (_callbacks.contains(callback)) {
+      print("detaching callback");
+      _callbacks.remove(callback);
+    }
   }
+
 }
 
 abstract class Callback {
@@ -188,6 +194,18 @@ abstract class Callback {
   onUnauthorized();
 
   onLogin();
+}
 
-  onOldApi();
+abstract class SpecificCallback {
+  onSuccess();
+
+  onFail();
+
+  onLoginFail();
+
+  onSuspend();
+
+  onUnauthorized();
+
+  onLogin();
 }
