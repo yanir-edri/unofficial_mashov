@@ -1,22 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:mashov_api/mashov_api.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unofficial_mashov/contollers/files_controller.dart';
-
 abstract class DatabaseController {
-  /*String _id;
-  String _password;
-  String _username;
-  String _sessionId;
-  String _name;
-  String _classCode;
-  String _csrfToken;
-  String _uniqueId;
-  String _mashovSessionId;
-  String _profilePicturePath;
-  */
   //getters
   String get id;
 
@@ -75,60 +65,60 @@ abstract class DatabaseController {
   set school(School value);
 
   //getters
-  List<Grade> get grades;
+  Observable<List<Grade>> get grades;
 
-  List<BagrutGrade> get bagrutGrades;
+  Observable<List<BagrutGrade>> get bagrutGrades;
 
-  List<BehaveEvent> get behaveEvents;
+  Observable<List<BehaveEvent>> get behaveEvents;
 
-  List<Group> get groups;
+  Observable<List<Group>> get groups;
 
-  List<Lesson> get timetable;
+  Observable<List<Lesson>> get timetable;
 
-  List<Contact> getContacts({int groupId = -1});
+  Observable<List<Contact>> getContacts({int groupId = -1});
 
-  List<MessageTitle> get conversations;
+  Observable<List<MessageTitle>> get conversations;
 
-  List<Maakav> get maakavReports;
+  Observable<List<Maakav>> get maakavReports;
 
-  List<Hatama> get hatamot;
+  Observable<List<Hatama>> get hatamot;
 
-  List<Homework> get homework;
+  Observable<List<Homework>> get homework;
 
   Future<Conversation> getConversation(String conversationId);
 
   Future<bool> hasConversation(String conversationId);
 
   //setters
-  set grades(List<Grade> grades);
+  set grades(dynamic grades);
 
-  set bagrutGrades(List<BagrutGrade> bagrutGrades);
+  set bagrutGrades(dynamic bagrutGrades);
 
-  set behaveEvents(List<BehaveEvent> behaveEvents);
+  set behaveEvents(dynamic behaveEvents);
 
-  set contacts(List<Contact> contacts);
+  set contacts(dynamic contacts);
 
-  Future<bool> setContactsGroup(List<Contact> contacts, int groupId);
+  Future<bool> setContactsGroup(dynamic contacts, int groupId);
 
-  set conversations(List<MessageTitle> conversations);
+  set conversations(dynamic conversations);
 
-  void setConversation(Conversation conversation);
+  void setConversation(dynamic conversation);
 
-  set timetable(List<Lesson> timetable);
+  set timetable(dynamic timetable);
 
-  set groups(List<Group> groups);
+  set groups(dynamic groups);
 
-  set maakavReports(List<Maakav> maakav);
+  set maakavReports(dynamic maakav);
 
-  set hatamot(List<Hatama> hatamot);
+  set hatamot(dynamic hatamot);
 
-  set homework(List<Homework> homework);
+  set homework(dynamic homework);
 
   Future<bool> hasEnoughData();
 
   clearData();
 
-  List getApiData(Api api, {Map data});
+  Observable<List> getApiData(Api api, {Map data});
 
   Future<bool> init();
 
@@ -196,37 +186,36 @@ class DatabaseControllerImpl implements DatabaseController {
 
   ///getters
 
-  String get id => _prefs.getString("id");
+  String get id => _prefs.getString("id") ?? "";
 
-  String get password => _prefs.getString("password");
+  String get password => _prefs.getString("password") ?? "";
 
-  String get username => _prefs.getString("username");
+  String get username => _prefs.getString("username") ?? "";
 
-  String get sessionId => _prefs.getString("sessionId");
+  String get sessionId => _prefs.getString("sessionId") ?? "";
 
-  String get userId => _prefs.get("userId");
+  String get userId => _prefs.get("userId") ?? "";
 
-  String get name => _prefs.getString("name");
+  String get name => _prefs.getString("name") ?? "";
 
-  String get classCode => _prefs.getString("classCode");
+  String get classCode => _prefs.getString("classCode") ?? "";
 
-  String get csrfToken => _prefs.getString("csrfToken");
+  String get csrfToken => _prefs.getString("csrfToken") ?? "";
 
-  String get uniqueId => _prefs.getString("uniqueId");
+  String get uniqueId => _prefs.getString("uniqueId") ?? "";
 
-  String get mashovSessionId => _prefs.getString("mashovSessionId");
+  String get mashovSessionId => _prefs.getString("mashovSessionId") ?? "";
 
-  String get profilePicturePath => _prefs.getString("profilePicturePath");
+  String get profilePicturePath => _prefs.getString("profilePicturePath") ?? "";
 
   School get school {
-    String src = _prefs.getString("school");
-    if (src.isEmpty) return null;
-    return School.fromJson(json.decode(src));
+    String src = _prefs.getString("school") ?? "";
+    return src.isNotEmpty ? School.fromJson(json.decode(src)) : null;
   }
 
-  int get year => _prefs.getInt("year");
+  int get year => _prefs.getInt("year") ?? -1;
 
-  int get classNum => _prefs.getInt("classNum");
+  int get classNum => _prefs.getInt("classNum") ?? -1;
 
   ///setters
 
@@ -264,11 +253,11 @@ class DatabaseControllerImpl implements DatabaseController {
 
   ///files
   @override
-  List<BehaveEvent> get behaveEvents =>
+  Observable<List<BehaveEvent>> get behaveEvents =>
       _getListFromFile(_behaveEventsFile, BehaveEvent.fromJson);
 
   @override
-  List<Contact> getContacts({int groupId = -1}) =>
+  Observable<List<Contact>> getContacts({int groupId = -1}) =>
       _getListFromFile(
           groupId == -1
               ? _contactsFile
@@ -276,82 +265,92 @@ class DatabaseControllerImpl implements DatabaseController {
           Contact.fromJson);
 
   @override
-  List<MessageTitle> get conversations =>
+  Observable<List<MessageTitle>> get conversations =>
       _getListFromFile(_conversationsFile, MessageTitle.fromJson);
 
   @override
-  List<Group> get groups => _getListFromFile(_groupsFile, Group.fromJson);
+  Observable<List<Group>> get groups =>
+      _getListFromFile(_groupsFile, Group.fromJson);
 
   @override
-  List<Grade> get grades => _getListFromFile(_gradesFile, Grade.fromJson);
+  Observable<List<Grade>> get grades =>
+      _getListFromFile(_gradesFile, Grade.fromJson);
 
   @override
-  List<BagrutGrade> get bagrutGrades =>
+  Observable<List<BagrutGrade>> get bagrutGrades =>
       _getListFromFile(_bagrutGradesFile, BagrutGrade.fromJson);
 
   @override
-  List<Lesson> get timetable =>
+  Observable<List<Lesson>> get timetable =>
       _getListFromFile(_timetableFile, Lesson.fromJson);
 
   @override
-  List<Maakav> get maakavReports =>
+  Observable<List<Maakav>> get maakavReports =>
       _getListFromFile(_maakavFile, Maakav.fromJson);
 
   @override
-  List<Hatama> get hatamot => _getListFromFile(_hatamotFile, Hatama.fromJson);
+  Observable<List<Hatama>> get hatamot =>
+      _getListFromFile(_hatamotFile, Hatama.fromJson);
 
   @override
-  List<Homework> get homework =>
+  Observable<List<Homework>> get homework =>
       _getListFromFile(_homeworkFile, Homework.fromJson);
 
   @override
-  set behaveEvents(List<BehaveEvent> value) =>
-      _setFile(_behaveEventsFile, json.encode(value));
-
-  @override
-  set contacts(List<Contact> value) =>
-      _setFile(_contactsFile, json.encode(value));
-
-  @override
-  set conversations(List<MessageTitle> value) =>
-      _setFile(_conversationsFile, json.encode(value));
-
-  @override
-  set groups(List<Group> value) => _setFile(_groupsFile, json.encode(value));
-
-  @override
-  set grades(List<Grade> value) => _setFile(_gradesFile, json.encode(value));
-
-  @override
-  set bagrutGrades(List<BagrutGrade> value) =>
-      _setFile(_bagrutGradesFile, json.encode(value));
-
-  @override
-  set timetable(List<Lesson> value) =>
-      _setFile(_timetableFile, json.encode(value));
-
-  @override
-  set maakavReports(List<Maakav> value) =>
-      _setFile(_maakavFile, json.encode(value));
-
-  @override
-  set hatamot(List<Hatama> value) => _setFile(_hatamotFile, json.encode(value));
-
-  @override
-  set homework(List<Homework> value) =>
-      _setFile(_homeworkFile, json.encode(value));
-
-  @override
-  setConversation(Conversation conversation) {
-    filesController
-        .getConversationFile(conversation.conversationId)
-        .then((file) {
-      _setFile(file, json.encode(conversation));
-    }).then((n) => true);
+  set behaveEvents(dynamic value) {
+    try {
+      _setFile(_behaveEventsFile, value);
+    } catch (e) {
+      print("error setting behave events: $e");
+      print("data: ${value.join(", ")}");
+    }
   }
 
   @override
-  Future<Conversation> getConversation(String conversationId) async {
+  set contacts(dynamic value) =>
+      _setFile(_contactsFile, value);
+
+  @override
+  set conversations(dynamic value) =>
+      _setFile(_conversationsFile, value);
+
+  @override
+  set groups(dynamic value) => _setFile(_groupsFile, value);
+
+  @override
+  set grades(dynamic value) => _setFile(_gradesFile, value);
+
+  @override
+  set bagrutGrades(dynamic value) =>
+      _setFile(_bagrutGradesFile, value);
+
+  @override
+  set timetable(dynamic json) =>
+      _setFile(_timetableFile, json);
+
+  @override
+  set maakavReports(dynamic value) =>
+      _setFile(_maakavFile, value);
+
+  @override
+  set hatamot(dynamic value) => _setFile(_hatamotFile, value);
+
+  @override
+  set homework(dynamic value) =>
+      _setFile(_homeworkFile, value);
+
+  @override
+  setConversation(dynamic conversation) {
+    Conversation c = Conversation.fromJson(json.decode(conversation));
+    filesController
+        .getConversationFile(c.conversationId)
+        .then((file) {
+      _setFile(file, conversation);
+    });
+  }
+
+  @override
+  Future<Conversation> getConversation(String conversationId) {
     return filesController.getConversationFile(conversationId).then((file) =>
         _tryRead(file).then((contents) =>
         contents.isNotEmpty
@@ -367,11 +366,22 @@ class DatabaseControllerImpl implements DatabaseController {
     return list.map<E>((item) => parser(item)).toList();
   }
 
-  List<E> _getListFromFile<E>(File f, Parser<E> parser) {
-    String contents = f.readAsStringSync();
-    return contents.isNotEmpty
-        ? _parseList(json.decode(contents), parser)
-        : List();
+  Observable<List<E>> _getListFromFile<E>(File f, Parser<E> parser) {
+//    Observable<List<E>> o = Observable<List<E>>(Stream.empty());
+    PublishSubject<List<E>> fetcher = PublishSubject<List<E>>();
+    f.readAsString().then((contents) {
+      fetcher.sink.add(contents.isNotEmpty
+          ? _parseList(json.decode(contents), parser)
+          : List<E>());
+    }).catchError((error) {
+      print("error getting list from file ${f.path
+          .split("/")
+          .last}, returning empty list.");
+      fetcher.sink.add(List());
+    }).whenComplete(() {
+      fetcher.close();
+    });
+    return fetcher.stream;
 //    return _tryRead(f).then((contents) => contents.isNotEmpty
 //          ? _parseList(json.decode(contents), parser)
 //          : null);
@@ -437,24 +447,28 @@ class DatabaseControllerImpl implements DatabaseController {
     }
   }
 
-  Future<bool> _setFile(File f, String value) async =>
-      f
-          .writeAsString((value == null || value.isEmpty) ? "" : value)
-          .then((file) => true)
-          .catchError((error) => false);
+  Future<bool> _setFile(File f, String value) async {
+    print("set file is called with file ${f.path
+        .split("/")
+        .last}, value $value");
+    return f
+        .writeAsString((value == null || value.isEmpty) ? "" : value)
+        .then((file) => true)
+        .catchError((error) => false);
+  }
 
   @override
-  Future<bool> setContactsGroup(List<Contact> contacts, int groupId) async =>
+  Future<bool> setContactsGroup(dynamic contacts, int groupId) async =>
       filesController
           .getContactsGroupFile("$groupId")
-          .then((file) => _setFile(file, json.encode(contacts)))
+          .then((file) => _setFile(file, contacts))
           .catchError((error) => false);
 
   @override
   void clearData() {
     filesController.clear();
     _prefs.clear();
-    fillPrefs();
+//    fillPrefs();
   }
 
   @override
@@ -465,7 +479,7 @@ class DatabaseControllerImpl implements DatabaseController {
   }
 
   @override
-  List getApiData(Api api, {Map data}) {
+  Observable<List> getApiData(Api api, {Map data}) {
     switch (api) {
       case Api.Homework:
         return homework;

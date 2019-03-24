@@ -1,32 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:mashov_api/mashov_api.dart';
+import 'package:unofficial_mashov/contollers/bloc.dart';
 import 'package:unofficial_mashov/inject.dart';
-import 'package:unofficial_mashov/routes/home.dart';
+
 
 class LoginRoute extends StatefulWidget {
-  final School school;
-  final int year;
-
-  LoginRoute({Key key, @required this.school, @required this.year})
-      : super(key: key);
 
   @override
   LoginRouteState createState() {
-    return LoginRouteState(school: school, year: year);
+    return LoginRouteState();
   }
 }
 
 class LoginRouteState extends State<LoginRoute> {
-  LoginRouteState({this.school, this.year}) : super();
 
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  School school;
-  int year = 2019;
-  Future<Result<Login>> loginFuture;
-  bool done = false;
-  Result<Login> loginValue;
 
   @override
   void dispose() {
@@ -78,36 +67,10 @@ class LoginRouteState extends State<LoginRoute> {
                         // username is _usernameController.text
                         //password is _passwordController.text
                         //year is $year
-                        setState(() {
-                          done = false;
-                          loginValue = null;
-                          Inject.databaseController
-                            ..school = school
-                            ..username = _usernameController.text
-                            ..password = _passwordController.text
-                            ..year = year;
-                          loginFuture = Inject.apiController.login(
-                              school,
-                              _usernameController.text,
-                              _passwordController.text,
-                              year);
-                          loginFuture.then((value) {
-                            setState(() {
-                              if (value.isOk) {
-                                LoginData data = value.value.data;
-                                Inject.databaseController
-                                  ..sessionId = data.sessionId
-                                  ..userId = data.userId;
-                                Inject.refreshController.refreshAll([
-                                  Api.Grades,
-                                  Api.Homework,
-                                  Api.Timetable,
-                                  Api.BehaveEvents
-                                ]);
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => HomeRoute()));
+                        bloc.tryLogin(_usernameController.text,
+                            _passwordController.text, (isSuccessful) {
+                              if (isSuccessful) {
+                                Navigator.pushNamed(context, '/home');
                               } else {
                                 showDialog(
                                     context: context, builder: (context) {
@@ -123,9 +86,6 @@ class LoginRouteState extends State<LoginRoute> {
                                 });
                               }
                             });
-                          });
-                        });
-                        print("signing in, ${loginFuture.hashCode}");
                       }
                     },
                     child: Text('התחבר'),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:mashov_api/mashov_api.dart';
 import 'package:unofficial_mashov/contollers/database_controller.dart';
 import 'package:unofficial_mashov/inject.dart';
@@ -14,13 +16,14 @@ class RefreshController {
   RefreshController() {
     _apiController = Inject.apiController;
     _databaseController = Inject.databaseController;
-    _apiController.attachDataProcessor((dynamic data, Api api) {
-      print("proccessing data on api $api");
+    _apiController.attachRawDataProcessor((dynamic data, Api api) {
+      print("proccessing raw data of api $api, data=$data");
       switch (api) {
         case Api.Grades:
           _databaseController.grades = data;
           break;
         case Api.BagrutGrades:
+          _databaseController.bagrutGrades = data;
           break;
         case Api.BehaveEvents:
           _databaseController.behaveEvents = data;
@@ -50,10 +53,15 @@ class RefreshController {
           _databaseController.hatamot = data;
           break;
         case Api.Login:
-          _databaseController.setLoginData(data);
+        //handled in data proccessor
           break;
         default:
           break;
+      }
+    });
+    _apiController.attachDataProcessor((dynamic data, Api api) {
+      if (api == Api.Login) {
+        _databaseController.setLoginData(data);
       }
     });
   }
@@ -61,7 +69,7 @@ class RefreshController {
   bool refresh(Api api, {Map data}) {
     if (_shouldPerformLogin) {
       _queuedRequests.add(api);
-      login();
+      _login();
     }
     if (_runningRequests.contains(api) || _queuedRequests.contains(api))
       return false;
@@ -69,7 +77,7 @@ class RefreshController {
       _queuedRequests.add(api);
       return false;
     } else {
-      refreshInternal(api, data: data);
+      _refreshInternal(api, data: data);
       return true;
     }
   }
@@ -78,7 +86,7 @@ class RefreshController {
     apis.forEach((api) => refresh(api, data: data));
   }
 
-  refreshInternal(Api api, {Map data}) {
+  _refreshInternal(Api api, {Map data}) {
     _runningRequests.add(api);
     Future<Result> request;
     String userId = _databaseController.userId;
@@ -104,17 +112,21 @@ class RefreshController {
       case Api.Timetable:
         request = _apiController.getTimeTable(userId);
         break;
+      case Api.Homework:
+        request = _apiController.getHomework(userId);
+        break;
       default:
         break;
     }
-    print("request==null is ${request == null}");
+//    print("request==null is ${request == null}");
     if (request != null) {
       request.then((result) {
+        print("request of api $api was ${result.isSuccess}");
         if (result.isSuccess) {
           _runningRequests.remove(api);
           _callbacks.forEach((c) => c.onSuccess(api));
         } else if (result.isNeedToLogin) {
-          login();
+          _login();
         } else if (result.isForbidden) {
           _runningRequests.remove(api);
           _callbacks.forEach((c) => c.onSuspend());
@@ -126,7 +138,7 @@ class RefreshController {
     }
   }
 
-  login() {
+  _login() {
     if (!_isPerformingLogin) {
       _isPerformingLogin = true;
       _queuedRequests += _runningRequests;
@@ -143,7 +155,7 @@ class RefreshController {
               ..year = login.data.year;
             _isPerformingLogin = false;
             _shouldPerformLogin = false;
-            _queuedRequests.forEach((api) => refreshInternal(api));
+            _queuedRequests.forEach((api) => _refreshInternal(api));
             _queuedRequests.clear();
           } else {
             _isPerformingLogin = false;
@@ -179,7 +191,6 @@ class RefreshController {
       _callbacks.remove(callback);
     }
   }
-
 }
 
 abstract class Callback {
@@ -196,16 +207,3 @@ abstract class Callback {
   onLogin();
 }
 
-abstract class SpecificCallback {
-  onSuccess();
-
-  onFail();
-
-  onLoginFail();
-
-  onSuspend();
-
-  onUnauthorized();
-
-  onLogin();
-}

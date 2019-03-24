@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
@@ -25,8 +26,7 @@ class FilesController {
     }).then((n) => true).catchError((error) => false);
   }
 
-  FilesController._new() {
-  }
+  FilesController._new();
 
   //Returns file with the name given,
   Future<File> getFile(String name) async {
