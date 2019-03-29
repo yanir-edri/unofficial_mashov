@@ -12,7 +12,8 @@ class FilesController {
 
   Future<bool> initStorage() {
     print("storage is initializing");
-    return getApplicationDocumentsDirectory().then((directory) {
+    return getApplicationDocumentsDirectory()
+        .then((directory) {
       _root = directory;
       _messagesDir = Directory("${_root.path}/messages");
       _messagesDir.exists().then((isExist) {
@@ -23,7 +24,9 @@ class FilesController {
         if (!isExist) _contactsDir.create();
       });
       print("storage is done initializing");
-    }).then((n) => true).catchError((error) => false);
+    })
+        .then((n) => true)
+        .catchError((error) => false);
   }
 
   FilesController._new();
@@ -40,7 +43,7 @@ class FilesController {
 
   Future<File> getConversationFile(String conversationId) async {
     File file = File("${_messagesDir.path}/$conversationId.json");
-    if(!file.existsSync()) {
+    if (!file.existsSync()) {
       file.createSync();
     }
     return file;
@@ -55,8 +58,14 @@ class FilesController {
     return file;
   }
 
-  void clear() async {
-    _root.delete(recursive: true);
-    _root.create().then((dir) => _messagesDir.create());
-  }
+  Future<bool> clear() async =>
+      _root
+          .delete(recursive: true)
+          .then((v) => _root.create())
+          .then((v) => _messagesDir.create())
+          .then((v) => initStorage())
+          .catchError((error) {
+        print(error);
+        return false;
+      });
 }

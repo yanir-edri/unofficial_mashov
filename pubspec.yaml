@@ -15,6 +15,7 @@ environment:
 dependencies:
   flutter_typeahead: ^0.5.1
   autocomplete_textfield: ^1.6.4
+  watcher: ^0.9.7+10
   mashov_api: ^0.0.9
   shared_preferences: ^0.4.3
   localstorage: ^1.0.1

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:unofficial_mashov/contollers/bloc.dart';
 import 'package:unofficial_mashov/inject.dart';
 import 'package:unofficial_mashov/routes/home.dart';
-import 'package:unofficial_mashov/routes/login.dart';
+import 'package:unofficial_mashov/routes/login/login.dart';
 import 'package:unofficial_mashov/routes/login/school.dart';
 
 void main() =>
     runApp(MaterialApp(
+        debugShowCheckedModeBanner: false,
         initialRoute: '/',
         routes: {
           '/': (context) => MyApp(),
@@ -51,7 +53,8 @@ class _MyAppState extends State<MyApp> {
           _failed = true;
         });
       } else {
-        Navigator.pushReplacementNamed(context, "/schools");
+        Navigator.pushReplacementNamed(
+            context, bloc.hasCredentials() ? "/login" : "/schools");
       }
     });
   }

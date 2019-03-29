@@ -3,10 +3,10 @@ import 'package:mashov_api/mashov_api.dart';
 import 'package:unofficial_mashov/contollers/bloc.dart';
 import 'package:unofficial_mashov/inject.dart';
 
-typedef Builder<E> = Widget Function(BuildContext context, E item);
+typedef Builder = Widget Function(BuildContext context, dynamic item);
 
 class DataList<E> extends StatefulWidget {
-  final Builder<E> builder;
+  final Builder builder;
   final Api api;
   final Map additionalData;
 
@@ -19,16 +19,12 @@ class DataList<E> extends StatefulWidget {
 
   @override
   DataListState<E> createState() {
-    return new DataListState<E>(builder);
+    return new DataListState<E>();
   }
 }
 
 class DataListState<E> extends State<DataList> /*implements Callback*/ {
-  DataListState(Builder<E> b) {
-    _builder = b;
-  }
 
-  Builder<E> _builder;
   List<E> _data = List();
 
   @override
@@ -38,20 +34,24 @@ class DataListState<E> extends State<DataList> /*implements Callback*/ {
         stream: bloc.getApiData(widget.api, data: widget.additionalData),
         builder: (context, snap) {
           if (snap.hasData && snap.data.length > 0) {
-            print("snap received data");
+            print("snap received data\n");
+            _data = snap.data;
             if (_data.isNotEmpty && E is Lesson) {
+              print("data is proccessed as timetable\n");
               //TODO: what if this is on the actual time table
               //TODO: use additional data map to specify (with a boolean)
               _data = timetableDayProcess(_data);
             }
-            print("returning listview");
+            print("returning listview with item count ${_data.length}");
             return ListView.builder(
                 itemCount: _data.length,
                 itemBuilder: (BuildContext context, int i) =>
-                    _builder(context, _data[i])).build(context);
+                    widget.builder(context, _data[i])).build(context);
           } else if (snap.hasError) {
+            print("snapshot error\n");
             return const Center(child: const Text("טעינת המידע נכשלה"));
           }
+          print("data list loading, returning circular progress view\n");
           return Container(
               margin: EdgeInsets.all(100), child: CircularProgressIndicator());
         },

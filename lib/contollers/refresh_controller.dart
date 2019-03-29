@@ -194,16 +194,16 @@ class RefreshController {
 }
 
 abstract class Callback {
-  onSuccess(Api api);
+  onSuccess(Api api) {}
 
-  onFail(Api api);
+  onFail(Api api) {}
 
-  onLoginFail();
+  onLoginFail() {}
 
-  onSuspend();
+  onSuspend() {}
 
-  onUnauthorized();
+  onUnauthorized() {}
 
-  onLogin();
+  onLogin() {}
 }
 

@@ -13,6 +13,8 @@ class Inject {
   static DatabaseController _databaseController;
   static RefreshController _refreshController;
   static List<School> _schools = List();
+  static bool _loginCredentialsSaved = false;
+  static bool _loggedOut = false;
 
   static Future<bool> isConnected() =>
       Connectivity()
@@ -24,7 +26,7 @@ class Inject {
     return isConnected().then((connected) {
       print("is connected equals $connected");
       if (!connected) return false;
-
+      if (_loggedOut) return Future.value(true);
       return SharedPreferences.getInstance()
           .then((prefs) {
         _databaseController = DatabaseControllerImpl(prefs);
@@ -45,6 +47,8 @@ class Inject {
     });
   }
 
+  static bool get loginCredentialsSaved => _loginCredentialsSaved;
+
   static List<School> get schools => _schools;
 
   static ApiController get apiController => _apiController;
@@ -58,11 +62,28 @@ class Inject {
       Directionality(textDirection: TextDirection.rtl, child: w);
 
   static Widget wrapper(Widget w) {
-    return rtl(
-        Scaffold(
-            appBar: AppBar(title: Text("התחברות למשוב"), centerTitle: true),
-            body: Container(margin: EdgeInsets.all(16.0), child: w)
-        )
-    );
+    return rtl(Scaffold(
+        appBar: AppBar(title: Text("התחברות למשוב"), centerTitle: true),
+        body: Container(margin: EdgeInsets.all(16.0), child: w)));
+  }
+
+  //turn YYYY-MM-DD'T'HH:MM:SS into DD/MM/YYYY
+  static String dateTimeToDateString(DateTime d) =>
+      d
+          .toIso8601String()
+          .split("T")
+          .first
+          .split("-")
+          .reversed
+          .join("/");
+
+  static List<E> timetableDayProcess<E>(List<E> data) {
+    int today = DateTime
+        .now()
+        .weekday;
+    List<Lesson> timetable = data.cast<Lesson>();
+    timetable.retainWhere((lesson) => lesson.day == today);
+    timetable.sort((lesson1, lesson2) => lesson1.hour - lesson2.hour);
+    return timetable as List<E>;
   }
 }

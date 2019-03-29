@@ -3,13 +3,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:mashov_api/mashov_api.dart';
-import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unofficial_mashov/contollers/files_controller.dart';
+
+
 abstract class DatabaseController {
   //getters
-  String get id;
-
   String get password;
 
   String get username;
@@ -65,25 +64,45 @@ abstract class DatabaseController {
   set school(School value);
 
   //getters
-  Observable<List<Grade>> get grades;
+  Future<List<Grade>> get grades;
 
-  Observable<List<BagrutGrade>> get bagrutGrades;
+//  Observable<List<Grade>> get grades;
 
-  Observable<List<BehaveEvent>> get behaveEvents;
+  Future<List<BagrutGrade>> get bagrutGrades;
 
-  Observable<List<Group>> get groups;
+//  Observable<List<BagrutGrade>> get bagrutGrades;
 
-  Observable<List<Lesson>> get timetable;
+  Future<List<BehaveEvent>> get behaveEvents;
 
-  Observable<List<Contact>> getContacts({int groupId = -1});
+//  Observable<List<BehaveEvent>> get behaveEvents;
 
-  Observable<List<MessageTitle>> get conversations;
+  Future<List<Group>> get groups;
 
-  Observable<List<Maakav>> get maakavReports;
+//  Observable<List<Group>> get groups;
 
-  Observable<List<Hatama>> get hatamot;
+  Future<List<Lesson>> get timetable;
 
-  Observable<List<Homework>> get homework;
+//  Observable<List<Lesson>> get timetable;
+
+  Future<List<Contact>> getContacts({int groupId = -1});
+
+//  Observable<List<Contact>> getContacts({int groupId = -1});
+
+  Future<List<MessageTitle>> get conversations;
+
+//  Observable<List<MessageTitle>> get conversations;
+
+  Future<List<Maakav>> get maakavReports;
+
+//  Observable<List<Maakav>> get maakavReports;
+
+  Future<List<Hatama>> get hatamot;
+
+//  Observable<List<Hatama>> get hatamot;
+
+  Future<List<Homework>> get homework;
+
+//  Observable<List<Homework>> get homework;
 
   Future<Conversation> getConversation(String conversationId);
 
@@ -116,13 +135,15 @@ abstract class DatabaseController {
 
   Future<bool> hasEnoughData();
 
-  clearData();
+  Future<bool> clearData();
 
-  Observable<List> getApiData(Api api, {Map data});
+  Future<List> getApiData(Api api, {Map data});
 
   Future<bool> init();
 
   setLoginData(Login data);
+
+  bool hasCredentials();
 }
 
 class DatabaseControllerImpl implements DatabaseController {
@@ -185,8 +206,6 @@ class DatabaseControllerImpl implements DatabaseController {
   ///prefs:
 
   ///getters
-
-  String get id => _prefs.getString("id") ?? "";
 
   String get password => _prefs.getString("password") ?? "";
 
@@ -252,12 +271,13 @@ class DatabaseControllerImpl implements DatabaseController {
   ///end prefs
 
   ///files
+
   @override
-  Observable<List<BehaveEvent>> get behaveEvents =>
+  Future<List<BehaveEvent>> get behaveEvents =>
       _getListFromFile(_behaveEventsFile, BehaveEvent.fromJson);
 
   @override
-  Observable<List<Contact>> getContacts({int groupId = -1}) =>
+  Future<List<Contact>> getContacts({int groupId = -1}) =>
       _getListFromFile(
           groupId == -1
               ? _contactsFile
@@ -265,35 +285,35 @@ class DatabaseControllerImpl implements DatabaseController {
           Contact.fromJson);
 
   @override
-  Observable<List<MessageTitle>> get conversations =>
+  Future<List<MessageTitle>> get conversations =>
       _getListFromFile(_conversationsFile, MessageTitle.fromJson);
 
   @override
-  Observable<List<Group>> get groups =>
+  Future<List<Group>> get groups =>
       _getListFromFile(_groupsFile, Group.fromJson);
 
   @override
-  Observable<List<Grade>> get grades =>
+  Future<List<Grade>> get grades =>
       _getListFromFile(_gradesFile, Grade.fromJson);
 
   @override
-  Observable<List<BagrutGrade>> get bagrutGrades =>
+  Future<List<BagrutGrade>> get bagrutGrades =>
       _getListFromFile(_bagrutGradesFile, BagrutGrade.fromJson);
 
   @override
-  Observable<List<Lesson>> get timetable =>
+  Future<List<Lesson>> get timetable =>
       _getListFromFile(_timetableFile, Lesson.fromJson);
 
   @override
-  Observable<List<Maakav>> get maakavReports =>
+  Future<List<Maakav>> get maakavReports =>
       _getListFromFile(_maakavFile, Maakav.fromJson);
 
   @override
-  Observable<List<Hatama>> get hatamot =>
+  Future<List<Hatama>> get hatamot =>
       _getListFromFile(_hatamotFile, Hatama.fromJson);
 
   @override
-  Observable<List<Homework>> get homework =>
+  Future<List<Homework>> get homework =>
       _getListFromFile(_homeworkFile, Homework.fromJson);
 
   @override
@@ -307,12 +327,10 @@ class DatabaseControllerImpl implements DatabaseController {
   }
 
   @override
-  set contacts(dynamic value) =>
-      _setFile(_contactsFile, value);
+  set contacts(dynamic value) => _setFile(_contactsFile, value);
 
   @override
-  set conversations(dynamic value) =>
-      _setFile(_conversationsFile, value);
+  set conversations(dynamic value) => _setFile(_conversationsFile, value);
 
   @override
   set groups(dynamic value) => _setFile(_groupsFile, value);
@@ -321,30 +339,24 @@ class DatabaseControllerImpl implements DatabaseController {
   set grades(dynamic value) => _setFile(_gradesFile, value);
 
   @override
-  set bagrutGrades(dynamic value) =>
-      _setFile(_bagrutGradesFile, value);
+  set bagrutGrades(dynamic value) => _setFile(_bagrutGradesFile, value);
 
   @override
-  set timetable(dynamic json) =>
-      _setFile(_timetableFile, json);
+  set timetable(dynamic json) => _setFile(_timetableFile, json);
 
   @override
-  set maakavReports(dynamic value) =>
-      _setFile(_maakavFile, value);
+  set maakavReports(dynamic value) => _setFile(_maakavFile, value);
 
   @override
   set hatamot(dynamic value) => _setFile(_hatamotFile, value);
 
   @override
-  set homework(dynamic value) =>
-      _setFile(_homeworkFile, value);
+  set homework(dynamic value) => _setFile(_homeworkFile, value);
 
   @override
   setConversation(dynamic conversation) {
     Conversation c = Conversation.fromJson(json.decode(conversation));
-    filesController
-        .getConversationFile(c.conversationId)
-        .then((file) {
+    filesController.getConversationFile(c.conversationId).then((file) {
       _setFile(file, conversation);
     });
   }
@@ -366,25 +378,35 @@ class DatabaseControllerImpl implements DatabaseController {
     return list.map<E>((item) => parser(item)).toList();
   }
 
-  Observable<List<E>> _getListFromFile<E>(File f, Parser<E> parser) {
-//    Observable<List<E>> o = Observable<List<E>>(Stream.empty());
-    PublishSubject<List<E>> fetcher = PublishSubject<List<E>>();
-    f.readAsString().then((contents) {
-      fetcher.sink.add(contents.isNotEmpty
+  Future<List<E>> _getListFromFile<E>(File f, Parser<E> parser) {
+    return f.readAsString().then((contents) {
+      print("contents length is ${contents.length} in _getListFromFile");
+      return contents.isNotEmpty
           ? _parseList(json.decode(contents), parser)
-          : List<E>());
+          : List<E>();
     }).catchError((error) {
-      print("error getting list from file ${f.path
-          .split("/")
-          .last}, returning empty list.");
-      fetcher.sink.add(List());
-    }).whenComplete(() {
-      fetcher.close();
+      print(
+          "error getting list from file ${f.path
+              .split("/")
+              .last}, returning empty list.");
+      return List<E>();
     });
-    return fetcher.stream;
-//    return _tryRead(f).then((contents) => contents.isNotEmpty
-//          ? _parseList(json.decode(contents), parser)
-//          : null);
+
+//    // because we close it in bloc
+//    // ignore: close_sinks
+//    PublishSubject<List<E>> fetcher = PublishSubject<List<E>>();
+//    f.watch(events: FileSystemEvent.modify).listen((event) {
+//      f.readAsString().then((contents) {
+//        print("contents length is ${contents.length} in _getListFromFile");
+//        fetcher.sink.add(contents.isNotEmpty
+//            ? _parseList(json.decode(contents), parser)
+//            : List<E>());
+//      }).catchError((error) {
+//        print(
+//            "error getting list from file ${f.path.split("/").last}, returning empty list.");
+//      });
+//    });
+//    return fetcher.stream;
   }
 
   @override
@@ -448,9 +470,10 @@ class DatabaseControllerImpl implements DatabaseController {
   }
 
   Future<bool> _setFile(File f, String value) async {
-    print("set file is called with file ${f.path
-        .split("/")
-        .last}, value $value");
+    print(
+        "set file is called with file ${f.path
+            .split("/")
+            .last}, value $value");
     return f
         .writeAsString((value == null || value.isEmpty) ? "" : value)
         .then((file) => true)
@@ -465,11 +488,15 @@ class DatabaseControllerImpl implements DatabaseController {
           .catchError((error) => false);
 
   @override
-  void clearData() {
-    filesController.clear();
-    _prefs.clear();
-//    fillPrefs();
-  }
+  Future<bool> clearData() async =>
+      filesController
+          .clear()
+          .then((isSuccessful) =>
+      isSuccessful ? _prefs.clear() : Future.value(false))
+          .catchError((error) {
+        print(error);
+        return false;
+      });
 
   @override
   setLoginData(Login data) {
@@ -479,7 +506,7 @@ class DatabaseControllerImpl implements DatabaseController {
   }
 
   @override
-  Observable<List> getApiData(Api api, {Map data}) {
+  Future<List> getApiData(Api api, {Map data}) {
     switch (api) {
       case Api.Homework:
         return homework;
@@ -522,4 +549,8 @@ class DatabaseControllerImpl implements DatabaseController {
   }
 
   bool _all(List<bool> booleans) => booleans.every((bool) => bool);
+
+  @override
+  bool hasCredentials() =>
+      username.isNotEmpty && password.isNotEmpty && school != null && year != 0;
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mashov_api/mashov_api.dart';
+import 'package:unofficial_mashov/contollers/bloc.dart';
 import 'package:unofficial_mashov/data_list.dart';
 import 'package:unofficial_mashov/inject.dart';
 
@@ -49,17 +50,22 @@ class HomeRouteState extends State<HomeRoute> {
 //              /*isThreeLine: true,*/
 //            ),
 //        api: Api.Homework);
-
     gradesList = DataList<Grade>(
-        builder: (BuildContext context, Grade grade) =>
-            ListTile(title: Row(
-              children: <Widget>[
-                Text(grade.event.length > 30 ? "${grade.event.substring(
-                    0, 27)}..." : grade.event),
-                Spacer(),
-                Text("${grade.grade}")
-              ],
-            ), subtitle: Text(grade.subject)),
+        builder: (BuildContext context, dynamic grade) =>
+            ListTile(title: Column(children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Text(grade.event.length > 30 ? "${grade.event.substring(
+                      0, 27)}..." : grade.event),
+                  Spacer(),
+                  Text("${grade.grade}")
+                ],
+              ),
+            ],), subtitle: Row(children: <Widget>[
+              Text(grade.subject),
+              Spacer(),
+              Text("${Inject.dateTimeToDateString(grade.eventDate)}")
+            ])),
         api: Api.Grades);
   }
 
@@ -67,13 +73,17 @@ class HomeRouteState extends State<HomeRoute> {
   Widget build(BuildContext context) {
     Widget body =
     Inject.rtl(
+
         Container(margin: EdgeInsets.all(24),
             child: ListView(
               children: <Widget>[
                 Row(children: <Widget>[
-                  Text("ציונים אחרונים:"),
+                  Text("ציונים אחרונים:", style: Theme
+                      .of(context)
+                      .textTheme
+                      .title,),
                   Spacer(),
-                  RaisedButton(
+                  FlatButton(
                     child: Text("ראה עוד", style: Theme
                         .of(context)
                         .textTheme
@@ -86,13 +96,9 @@ class HomeRouteState extends State<HomeRoute> {
 
                   )
                 ],),
-                Container(child: gradesList, height: 300),
-//                    Spacer(),
-//                    Text("שיעורי בית:"),
-//                    Container(child: homeworkList,height: 300),
-//                    Spacer(),
-//                Text("מערכת שעות יומית"),
-//                Container(child: todayList, height: 300)
+                Container(child: Center(
+                    child: Card(elevation: 2.0, child: gradesList)),
+                    height: 300),
               ],
             )));
     return Scaffold(
@@ -100,7 +106,12 @@ class HomeRouteState extends State<HomeRoute> {
           title: Center(
               child: Column(children: [
                 Text("משוב"),
-                Row(children: [Text("משהו אחד"), Spacer(), Text("משהו אחר")])
+                Row(children: [
+                  GestureDetector(child: Text("משהו אחד"), onTap: () {
+                    print("logging out");
+                    bloc.logout(context);
+                  },), Spacer(), Text("משהו אחר")
+                ])
               ]))),
       body: body,
     );
