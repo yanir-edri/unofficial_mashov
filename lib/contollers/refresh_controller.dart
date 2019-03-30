@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:mashov_api/mashov_api.dart';
+import 'package:unofficial_mashov/contollers/bloc.dart';
 import 'package:unofficial_mashov/contollers/database_controller.dart';
-import 'package:unofficial_mashov/inject.dart';
 
 class RefreshController {
   ApiController _apiController;
@@ -14,13 +14,13 @@ class RefreshController {
   bool _shouldPerformLogin = false;
 
   RefreshController() {
-    _apiController = Inject.apiController;
-    _databaseController = Inject.databaseController;
+    _apiController = bloc.apiController;
+    _databaseController = bloc.db;
     _apiController.attachRawDataProcessor((dynamic data, Api api) {
       print("proccessing raw data of api $api, data=$data");
       switch (api) {
         case Api.Grades:
-          _databaseController.grades = data;
+          bloc.db.grades = data;
           break;
         case Api.BagrutGrades:
           _databaseController.bagrutGrades = data;

@@ -8,7 +8,7 @@ class ChooseSchoolRoute extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("building schools route, schools size is ${Inject.schools.length}");
+    print("building schools route, schools size is ${bloc.schools.length}");
     return Inject.wrapper(Container(child: Form(child: _field(context))));
   }
 
@@ -20,7 +20,7 @@ class ChooseSchoolRoute extends StatelessWidget {
           decoration: const InputDecoration(
               icon: Icon(Icons.school), labelText: "בחר בית ספר:")),
       suggestionsCallback: (pattern) {
-        return Inject.schools
+        return bloc.schools
             .where((school) =>
         (school.name.startsWith(pattern) ||
             school.id.toString().startsWith(pattern)))

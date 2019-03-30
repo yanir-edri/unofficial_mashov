@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:unofficial_mashov/contollers/bloc.dart';
-import 'package:unofficial_mashov/inject.dart';
 import 'package:unofficial_mashov/routes/home.dart';
 import 'package:unofficial_mashov/routes/login/login.dart';
 import 'package:unofficial_mashov/routes/login/school.dart';
@@ -47,7 +46,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    Inject.setup().then((isSuccessful) {
+    bloc.setup().then((isSuccessful) {
       if (!isSuccessful) {
         setState(() {
           _failed = true;

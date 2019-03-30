@@ -51,12 +51,14 @@ class HomeRouteState extends State<HomeRoute> {
 //            ),
 //        api: Api.Homework);
     gradesList = DataList<Grade>(
-        builder: (BuildContext context, dynamic grade) =>
-            ListTile(title: Column(children: <Widget>[
+        builder: (BuildContext context, dynamic g) {
+          Grade grade = g as Grade;
+          return ListTile(title: Column(children: <Widget>[
               Row(
                 children: <Widget>[
-                  Text(grade.event.length > 30 ? "${grade.event.substring(
-                      0, 27)}..." : grade.event),
+                  Text(grade.event.length > 30 ? "${(grade.event as String)
+                      .substring(0, 27)
+                      .trimRight()}..." : grade.event),
                   Spacer(),
                   Text("${grade.grade}")
                 ],
@@ -65,7 +67,8 @@ class HomeRouteState extends State<HomeRoute> {
               Text(grade.subject),
               Spacer(),
               Text("${Inject.dateTimeToDateString(grade.eventDate)}")
-            ])),
+          ]));
+        },
         api: Api.Grades);
   }
 
@@ -73,7 +76,6 @@ class HomeRouteState extends State<HomeRoute> {
   Widget build(BuildContext context) {
     Widget body =
     Inject.rtl(
-
         Container(margin: EdgeInsets.all(24),
             child: ListView(
               children: <Widget>[

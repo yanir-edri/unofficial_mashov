@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mashov_api/mashov_api.dart';
 import 'package:unofficial_mashov/contollers/bloc.dart';
-import 'package:unofficial_mashov/inject.dart';
 
 typedef Builder = Widget Function(BuildContext context, dynamic item);
 
@@ -60,7 +59,7 @@ class DataListState<E> extends State<DataList> /*implements Callback*/ {
   @override
   void initState() {
     super.initState();
-    Inject.refreshController.refresh(widget.api);
+    bloc.refreshController.refresh(widget.api);
   }
 
   @override

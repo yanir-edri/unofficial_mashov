@@ -1,54 +1,97 @@
 import 'dart:async';
 
+import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:mashov_api/mashov_api.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unofficial_mashov/contollers/database_controller.dart';
+import 'package:unofficial_mashov/contollers/files_controller.dart';
 import 'package:unofficial_mashov/contollers/refresh_controller.dart';
-import 'package:unofficial_mashov/inject.dart';
 
 typedef Future<List> Updater(Api api, {Map data});
 
 class MasterBloc extends Callback {
-  DatabaseController get db => Inject.databaseController;
+
+
+  ApiController _apiController = MashovApi.getController();
+  DatabaseController _databaseController;
+  RefreshController _refreshController;
+  bool _loginCredentialsSaved = false;
+  bool _loggedOut = false;
+
+  Future<bool> isConnected() =>
+      Connectivity()
+          .checkConnectivity()
+          .then((result) => result != ConnectivityResult.none)
+          .catchError((error) => false);
+
+  Future<bool> setup() =>
+      isConnected().then((connected) {
+        print("is connected equals $connected");
+        if (!connected) return false;
+        if (_loggedOut) return Future.value(true);
+        return SharedPreferences.getInstance()
+            .then((prefs) {
+          _databaseController = DatabaseControllerImpl(prefs);
+          _refreshController = RefreshController();
+          _refreshController.attach(this);
+          return filesController.initStorage();
+        })
+            .then((n) => _databaseController.init())
+            .then((successful) =>
+        !successful
+            ? false
+            : _apiController.getSchools().then((result) {
+          if (result.isSuccess) {
+            _schools = result.value;
+            return true;
+          }
+          return false;
+        }));
+      });
+
+  bool get loginCredentialsSaved => _loginCredentialsSaved;
+
+  List<School> get schools => _schools;
+
+  ApiController get apiController => _apiController;
+
+
+  RefreshController get refreshController => _refreshController;
+
+
+  DatabaseController get db => _databaseController;
   List<School> _schools;
   List<ApiPublishSubject> _publishSubjects = List();
 
-  MasterBloc() {
-    Inject.refreshController.attach(this);
-  }
 
   setYearAndSchool(School school, int year) {
-    Inject.databaseController
+    db
       ..school = school
       ..year = year;
   }
 
-  List<School> getSuggestions(String pattern) {
-    if (_schools == null) {
-      _schools = Inject.schools;
-    }
-    return _schools
+  List<School> getSuggestions(String pattern) =>
+      _schools
         .where((school) =>
     school.name.startsWith(pattern) ||
         school.id.toString().startsWith(pattern))
         .toList();
-  }
 
   void tryLogin(String username, String password,
       void onComplete(bool success)) {
-    Inject.apiController
-        .login(Inject.databaseController.school, username, password,
-        Inject.databaseController.year)
+    apiController
+        .login(db.school, username, password,
+        db.year)
         .then((loginR) {
       if (loginR.isSuccess) {
         //save login info for next login
-        Inject.databaseController
-          ..username = username
-          ..password = password;
-        //save session's data
+        //and save session's data
         LoginData data = loginR.value.data;
-        Inject.databaseController
+        db
+          ..username = username
+          ..password = password
           ..sessionId = data.sessionId
           ..userId = data.userId;
         //might want to refresh these stuff from here in the future:
@@ -69,21 +112,23 @@ class MasterBloc extends Callback {
 
     // ignore: close_sinks
     PublishSubject<List> ps = PublishSubject();
-    Inject.refreshController.refresh(api, data: data);
-    _publishSubjects.add(ApiPublishSubject(ps, api, Inject.databaseController
+    refreshController.refresh(api, data: data);
+    _publishSubjects.add(ApiPublishSubject(ps, api, db
         .getApiData, data: data));
     return ps.stream;
   }
 
-  bool hasCredentials() => Inject.databaseController.hasCredentials();
+  bool hasCredentials() => db.hasCredentials();
 
   dispose() {
     _publishSubjects.forEach((ps) => ps.ps.close());
   }
 
   logout(BuildContext context) {
-    db.clearData();
-    Navigator.pushReplacementNamed(context, "/");
+    _loggedOut = true;
+    db.clearData().then((b) {
+      Navigator.pushReplacementNamed(context, "/");
+    });
   }
 
   @override
@@ -109,3 +154,4 @@ class ApiPublishSubject {
 }
 
 MasterBloc bloc = MasterBloc();
+
