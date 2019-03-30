@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:unofficial_mashov/contollers/bloc.dart';
-import 'package:unofficial_mashov/routes/home.dart';
-import 'package:unofficial_mashov/routes/login/login.dart';
-import 'package:unofficial_mashov/routes/login/school.dart';
+import 'package:unofficial_mashov/ui/routes/home.dart';
+import 'package:unofficial_mashov/ui/routes/login/login.dart';
+import 'package:unofficial_mashov/ui/routes/login/school.dart';
 
 void main() =>
     runApp(MaterialApp(

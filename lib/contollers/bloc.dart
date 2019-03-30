@@ -20,6 +20,7 @@ class MasterBloc extends Callback {
   bool _loginCredentialsSaved = false;
   bool _loggedOut = false;
 
+
   Future<bool> isConnected() =>
       Connectivity()
           .checkConnectivity()

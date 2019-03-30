@@ -378,18 +378,25 @@ class DatabaseControllerImpl implements DatabaseController {
     return list.map<E>((item) => parser(item)).toList();
   }
 
-  Future<List<E>> _getListFromFile<E>(File f, Parser<E> parser) {
+  Future<List<E>> _getListFromFile<E>(File f, Parser<E> parser,
+      {bool tried: false}) {
     return f.readAsString().then((contents) {
       print("contents length is ${contents.length} in _getListFromFile");
       return contents.isNotEmpty
           ? _parseList(json.decode(contents), parser)
           : List<E>();
     }).catchError((error) {
-      print(
-          "error getting list from file ${f.path
-              .split("/")
-              .last}, returning empty list.");
-      return List<E>();
+      if (tried) {
+        print(
+            "error getting list from file ${f.path
+                .split("/")
+                .last}, returning empty list.");
+        return List<E>();
+      }
+      print("error getting list from file ${f.path
+          .split("/")
+          .last}, trying again.");
+      return _getListFromFile(f, parser, tried: true);
     });
 
 //    // because we close it in bloc

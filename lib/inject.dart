@@ -32,4 +32,6 @@ class Inject {
     timetable.sort((lesson1, lesson2) => lesson1.hour - lesson2.hour);
     return timetable as List<E>;
   }
+
+  static const double margin = 24.0;
 }
