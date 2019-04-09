@@ -16,13 +16,17 @@ class FilesController {
         .then((directory) {
       _root = directory;
       _messagesDir = Directory("${_root.path}/messages");
-      _messagesDir.exists().then((isExist) {
-        if (!isExist) _messagesDir.create();
-      });
+      return _messagesDir.exists();
+    }).then((isExist) {
+      if (!isExist) return _messagesDir.create();
+      return Future.value(_messagesDir);
+    }).then((d) {
       _contactsDir = Directory("${_root.path}/contacts");
-      _contactsDir.exists().then((isExist) {
-        if (!isExist) _contactsDir.create();
-      });
+      return _contactsDir.exists();
+    }).then((isExist) {
+      if (!isExist) _contactsDir.create();
+      return Future.value(_contactsDir);
+    }).then((d) {
       print("storage is done initializing");
     })
         .then((n) => true)
@@ -32,11 +36,11 @@ class FilesController {
   FilesController._new();
 
   //Returns file with the name given,
-  Future<File> getFile(String name) async {
+  Future<File> getFile(String name) {
     //if contains file
     File file = File("${_root.path}/$name");
     return file.exists().then((exists) {
-      if (exists) return file;
+      if (exists) return Future.value(file);
       return file.create();
     });
   }
@@ -52,6 +56,16 @@ class FilesController {
   Future<File> getContactsGroupFile(String groupId) async {
     File file = File("${_contactsDir.path}/$groupId.json");
 
+    if (!file.existsSync()) {
+      file.createSync();
+    }
+    return file;
+  }
+
+  String get picturePath => "${_root.path}/picture.png";
+
+  File get pictureFile {
+    File file = File(picturePath);
     if (!file.existsSync()) {
       file.createSync();
     }

@@ -6,147 +6,7 @@ import 'package:mashov_api/mashov_api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unofficial_mashov/contollers/files_controller.dart';
 
-
-abstract class DatabaseController {
-  //getters
-  String get password;
-
-  String get username;
-
-  String get sessionId;
-
-  String get userId;
-
-  String get name;
-
-  String get classCode;
-
-  String get csrfToken;
-
-  String get uniqueId;
-
-  String get mashovSessionId;
-
-  String get profilePicturePath;
-
-  int get year;
-
-  int get classNum;
-
-  School get school;
-
-  set id(String value);
-
-  set password(String value);
-
-  set username(String value);
-
-  set sessionId(String value);
-
-  set userId(String value);
-
-  set name(String value);
-
-  set classCode(String value);
-
-  set csrfToken(String value);
-
-  set uniqueId(String value);
-
-  set mashovSessionId(String value);
-
-  set profilePicturePath(String value);
-
-  set year(int value);
-
-  set classNum(int value);
-
-  set school(School value);
-
-  //getters
-  Future<List<Grade>> get grades;
-
-//  Observable<List<Grade>> get grades;
-
-  Future<List<BagrutGrade>> get bagrutGrades;
-
-//  Observable<List<BagrutGrade>> get bagrutGrades;
-
-  Future<List<BehaveEvent>> get behaveEvents;
-
-//  Observable<List<BehaveEvent>> get behaveEvents;
-
-  Future<List<Group>> get groups;
-
-//  Observable<List<Group>> get groups;
-
-  Future<List<Lesson>> get timetable;
-
-//  Observable<List<Lesson>> get timetable;
-
-  Future<List<Contact>> getContacts({int groupId = -1});
-
-//  Observable<List<Contact>> getContacts({int groupId = -1});
-
-  Future<List<MessageTitle>> get conversations;
-
-//  Observable<List<MessageTitle>> get conversations;
-
-  Future<List<Maakav>> get maakavReports;
-
-//  Observable<List<Maakav>> get maakavReports;
-
-  Future<List<Hatama>> get hatamot;
-
-//  Observable<List<Hatama>> get hatamot;
-
-  Future<List<Homework>> get homework;
-
-//  Observable<List<Homework>> get homework;
-
-  Future<Conversation> getConversation(String conversationId);
-
-  Future<bool> hasConversation(String conversationId);
-
-  //setters
-  set grades(dynamic grades);
-
-  set bagrutGrades(dynamic bagrutGrades);
-
-  set behaveEvents(dynamic behaveEvents);
-
-  set contacts(dynamic contacts);
-
-  Future<bool> setContactsGroup(dynamic contacts, int groupId);
-
-  set conversations(dynamic conversations);
-
-  void setConversation(dynamic conversation);
-
-  set timetable(dynamic timetable);
-
-  set groups(dynamic groups);
-
-  set maakavReports(dynamic maakav);
-
-  set hatamot(dynamic hatamot);
-
-  set homework(dynamic homework);
-
-  Future<bool> hasEnoughData();
-
-  Future<bool> clearData();
-
-  Future<List> getApiData(Api api, {Map data});
-
-  Future<bool> init();
-
-  setLoginData(Login data);
-
-  bool hasCredentials();
-}
-
-class DatabaseControllerImpl implements DatabaseController {
+class DatabaseController {
   SharedPreferences _prefs;
 
   static File _conversationsFile;
@@ -161,42 +21,42 @@ class DatabaseControllerImpl implements DatabaseController {
   static File _homeworkFile;
 
   ///Returns true if successful, false otherwise.
-  @override
-  Future<bool> init() =>
-      Future.wait<File>([
-        filesController
-            .getFile("conversations.json")
-            .then((file) => _conversationsFile = file),
-        filesController
-            .getFile("behave_events.json")
-            .then((file) => _behaveEventsFile = file),
-        filesController
-            .getContactsGroupFile("default")
-            .then((file) => _contactsFile = file),
-        filesController
-            .getFile("grades.json")
-            .then((file) => _gradesFile = file),
-        filesController
-            .getFile("bagrut.json")
-            .then((file) => _bagrutGradesFile = file),
-        filesController
-            .getFile("groups.json")
-            .then((file) => _groupsFile = file),
-        filesController
-            .getFile("timetable.json")
-            .then((file) => _timetableFile = file),
-        filesController
-            .getFile("maakav.json")
-            .then((file) => _maakavFile = file),
-        filesController
-            .getFile("hatamot.json")
-            .then((file) => _hatamotFile = file),
-        filesController
-            .getFile("homework.json")
-            .then((file) => _homeworkFile = file),
-      ]).then((list) => true).catchError((error) => false);
+  Future<bool> init() {
+    List<Future> futures = [
+      filesController
+          .getFile("conversations.json")
+          .then((file) => _conversationsFile = file),
+      filesController
+          .getFile("behave_events.json")
+          .then((file) => _behaveEventsFile = file),
+      filesController
+          .getContactsGroupFile("default")
+          .then((file) => _contactsFile = file),
+      filesController.getFile("grades.json").then((file) => _gradesFile = file),
+      filesController
+          .getFile("bagrut.json")
+          .then((file) => _bagrutGradesFile = file),
+      filesController.getFile("groups.json").then((file) => _groupsFile = file),
+      filesController
+          .getFile("timetable.json")
+          .then((file) => _timetableFile = file),
+      filesController.getFile("maakav.json").then((file) => _maakavFile = file),
+      filesController
+          .getFile("hatamot.json")
+          .then((file) => _hatamotFile = file),
+      filesController
+          .getFile("homework.json")
+          .then((file) => _homeworkFile = file),
+    ];
+    return Future.wait(futures).then((l) => true).catchError((error) {
+      print(error);
+      return false;
+    });
+  }
 
-  DatabaseControllerImpl(SharedPreferences prefs) {
+  /*Future.wait<File>().then((list) => true).catchError((error) => false);*/
+
+  DatabaseController(SharedPreferences prefs) {
     ///it's easier to get it injected rather than messing it up trying to await it's future.
     _prefs = prefs;
     //make sure prefs will not throw exceptions
@@ -215,9 +75,13 @@ class DatabaseControllerImpl implements DatabaseController {
 
   String get userId => _prefs.get("userId") ?? "";
 
-  String get name => _prefs.getString("name") ?? "";
+  String get privateName => _prefs.getString("privateName") ?? "";
 
-  String get classCode => _prefs.getString("classCode") ?? "";
+  String get familyName => _prefs.getString("familyName") ?? "";
+
+  String get displayName => "$privateName $familyName";
+
+  String get displayClass => "$classCode\'$classNum";
 
   String get csrfToken => _prefs.getString("csrfToken") ?? "";
 
@@ -225,7 +89,12 @@ class DatabaseControllerImpl implements DatabaseController {
 
   String get mashovSessionId => _prefs.getString("mashovSessionId") ?? "";
 
-  String get profilePicturePath => _prefs.getString("profilePicturePath") ?? "";
+  String get profilePicturePath => filesController.picturePath;
+
+  File get profilePicture =>
+      profilePicturePath != null ? filesController.pictureFile : null;
+
+  bool get pictureSet => _prefs.getBool("pictureSet") ?? false;
 
   School get school {
     String src = _prefs.getString("school") ?? "";
@@ -234,7 +103,11 @@ class DatabaseControllerImpl implements DatabaseController {
 
   int get year => _prefs.getInt("year") ?? -1;
 
-  int get classNum => _prefs.getInt("classNum") ?? -1;
+  String get classCode => _prefs.getString("classCode");
+
+  String get classNum => _prefs.getString("classNum");
+
+  String get classFormatted => "$classCode\'$classNum";
 
   ///setters
 
@@ -246,9 +119,9 @@ class DatabaseControllerImpl implements DatabaseController {
 
   set sessionId(String value) => _prefs.setString("sessionId", value);
 
-  set name(String value) => _prefs.setString("name", value);
+  set privateName(String value) => _prefs.setString("privateName", value);
 
-  set classCode(String value) => _prefs.setString("classCode", value);
+  set familyName(String value) => _prefs.setString("familyName", value);
 
   set csrfToken(String value) => _prefs.setString("csrfToken", value);
 
@@ -262,61 +135,80 @@ class DatabaseControllerImpl implements DatabaseController {
 
   set year(int value) => _prefs.setInt("year", value);
 
-  set classNum(int value) => _prefs.setInt("classNum", value);
-
   set school(School value) => _prefs.setString("school", json.encode(value));
 
   set userId(String value) => _prefs.setString("userId", value);
+
+  set classCode(String value) => _prefs.setString("classCode", value);
+
+  set classNum(String value) => _prefs.setString("classNum", value);
 
   ///end prefs
 
   ///files
 
-  @override
   Future<List<BehaveEvent>> get behaveEvents =>
-      _getListFromFile(_behaveEventsFile, BehaveEvent.fromJson);
+      _getListFromFile(_behaveEventsFile, BehaveEvent.fromJson).then((l) {
+        l.sort((event1, event2) => event1.date.compareTo(event2.date));
+        return l;
+      });
 
-  @override
   Future<List<Contact>> getContacts({int groupId = -1}) =>
       _getListFromFile(
           groupId == -1
               ? _contactsFile
               : filesController.getContactsGroupFile("$groupId"),
-          Contact.fromJson);
+          Contact.fromJson)
+          .then((l) {
+        l.sort((o1, o2) => o1.name.compareTo(o2.name));
+        return l;
+      });
 
-  @override
   Future<List<MessageTitle>> get conversations =>
-      _getListFromFile(_conversationsFile, MessageTitle.fromJson);
+      _getListFromFile(_conversationsFile, MessageTitle.fromJson).then((l) {
+        l.sort((o1, o2) => o1.sendDate.compareTo(o2.sendDate));
+        return l;
+      });
 
-  @override
   Future<List<Group>> get groups =>
-      _getListFromFile(_groupsFile, Group.fromJson);
+      _getListFromFile(_groupsFile, Group.fromJson).then((l) {
+        l.sort((o1, o2) => o1.subject.compareTo(o2.subject));
+        return l;
+      });
 
-  @override
   Future<List<Grade>> get grades =>
-      _getListFromFile(_gradesFile, Grade.fromJson);
+      _getListFromFile(_gradesFile, Grade.fromJson).then((l) {
+        l.sort((o1, o2) => o2.eventDate.compareTo(o1.eventDate));
+        return l;
+      });
 
-  @override
   Future<List<BagrutGrade>> get bagrutGrades =>
-      _getListFromFile(_bagrutGradesFile, BagrutGrade.fromJson);
+      _getListFromFile(_bagrutGradesFile, BagrutGrade.fromJson).then((l) {
+        l.sort((o1, o2) => o2.date.compareTo(o1.date));
+        return l;
+      });
 
-  @override
   Future<List<Lesson>> get timetable =>
       _getListFromFile(_timetableFile, Lesson.fromJson);
 
-  @override
   Future<List<Maakav>> get maakavReports =>
-      _getListFromFile(_maakavFile, Maakav.fromJson);
+      _getListFromFile(_maakavFile, Maakav.fromJson).then((l) {
+        l.sort((o1, o2) => o2.date.compareTo(o1.date));
+        return l;
+      });
 
-  @override
   Future<List<Hatama>> get hatamot =>
-      _getListFromFile(_hatamotFile, Hatama.fromJson);
+      _getListFromFile(_hatamotFile, Hatama.fromJson).then((l) {
+        l.sort((o1, o2) => o2.name.compareTo(o1.name));
+        return l;
+      });
 
-  @override
   Future<List<Homework>> get homework =>
-      _getListFromFile(_homeworkFile, Homework.fromJson);
+      _getListFromFile(_homeworkFile, Homework.fromJson).then((l) {
+        l.sort((o1, o2) => o2.date.compareTo(o1.date));
+        return l;
+      });
 
-  @override
   set behaveEvents(dynamic value) {
     try {
       _setFile(_behaveEventsFile, value);
@@ -326,34 +218,24 @@ class DatabaseControllerImpl implements DatabaseController {
     }
   }
 
-  @override
   set contacts(dynamic value) => _setFile(_contactsFile, value);
 
-  @override
   set conversations(dynamic value) => _setFile(_conversationsFile, value);
 
-  @override
   set groups(dynamic value) => _setFile(_groupsFile, value);
 
-  @override
   set grades(dynamic value) => _setFile(_gradesFile, value);
 
-  @override
   set bagrutGrades(dynamic value) => _setFile(_bagrutGradesFile, value);
 
-  @override
   set timetable(dynamic json) => _setFile(_timetableFile, json);
 
-  @override
   set maakavReports(dynamic value) => _setFile(_maakavFile, value);
 
-  @override
   set hatamot(dynamic value) => _setFile(_hatamotFile, value);
 
-  @override
   set homework(dynamic value) => _setFile(_homeworkFile, value);
 
-  @override
   setConversation(dynamic conversation) {
     Conversation c = Conversation.fromJson(json.decode(conversation));
     filesController.getConversationFile(c.conversationId).then((file) {
@@ -361,7 +243,6 @@ class DatabaseControllerImpl implements DatabaseController {
     });
   }
 
-  @override
   Future<Conversation> getConversation(String conversationId) {
     return filesController.getConversationFile(conversationId).then((file) =>
         _tryRead(file).then((contents) =>
@@ -381,7 +262,6 @@ class DatabaseControllerImpl implements DatabaseController {
   Future<List<E>> _getListFromFile<E>(File f, Parser<E> parser,
       {bool tried: false}) {
     return f.readAsString().then((contents) {
-      print("contents length is ${contents.length} in _getListFromFile");
       return contents.isNotEmpty
           ? _parseList(json.decode(contents), parser)
           : List<E>();
@@ -393,37 +273,37 @@ class DatabaseControllerImpl implements DatabaseController {
                 .last}, returning empty list.");
         return List<E>();
       }
-      print("error getting list from file ${f.path
-          .split("/")
-          .last}, trying again.");
+      print(
+          "error getting list from file ${f.path
+              .split("/")
+              .last}, trying again.");
       return _getListFromFile(f, parser, tried: true);
     });
-
-//    // because we close it in bloc
-//    // ignore: close_sinks
-//    PublishSubject<List<E>> fetcher = PublishSubject<List<E>>();
-//    f.watch(events: FileSystemEvent.modify).listen((event) {
-//      f.readAsString().then((contents) {
-//        print("contents length is ${contents.length} in _getListFromFile");
-//        fetcher.sink.add(contents.isNotEmpty
-//            ? _parseList(json.decode(contents), parser)
-//            : List<E>());
-//      }).catchError((error) {
-//        print(
-//            "error getting list from file ${f.path.split("/").last}, returning empty list.");
-//      });
-//    });
-//    return fetcher.stream;
   }
 
-  @override
   Future<bool> hasConversation(String conversationId) =>
       filesController
           .getConversationFile(conversationId)
           .then((file) => file.exists())
           .catchError((error) => false);
 
-  @override
+  Future<num> getAverage() =>
+      grades.then((grades) =>
+      grades.map<num>((g) => g.grade).toList().reduce((n1, n2) => n1 + n2) /
+          grades.length);
+
+  Future<int> todayLessonsCount() {
+    int today = DateTime
+        .now()
+        .weekday;
+    today = today == 7 ? 1 : today + 1;
+    return timetable.then(
+            (lessons) =>
+        lessons
+            .where((lesson) => lesson.day == today)
+            .length);
+  }
+
   Future<bool> hasEnoughData() =>
       Future.wait([
         File(profilePicturePath).exists(),
@@ -474,6 +354,9 @@ class DatabaseControllerImpl implements DatabaseController {
     if (!_prefs.getKeys().contains("school")) {
       _prefs.setString("school", "");
     }
+    if (!_prefs.getKeys().contains("pictureSet")) {
+      _prefs.setBool("pictureSet", false);
+    }
   }
 
   Future<bool> _setFile(File f, String value) async {
@@ -487,14 +370,12 @@ class DatabaseControllerImpl implements DatabaseController {
         .catchError((error) => false);
   }
 
-  @override
   Future<bool> setContactsGroup(dynamic contacts, int groupId) async =>
       filesController
           .getContactsGroupFile("$groupId")
           .then((file) => _setFile(file, contacts))
           .catchError((error) => false);
 
-  @override
   Future<bool> clearData() async =>
       filesController
           .clear()
@@ -505,14 +386,12 @@ class DatabaseControllerImpl implements DatabaseController {
         return false;
       });
 
-  @override
   setLoginData(Login data) {
     userId = data.data.userId;
     sessionId = data.data.sessionId;
     year = data.data.year;
   }
 
-  @override
   Future<List> getApiData(Api api, {Map data}) {
     switch (api) {
       case Api.Homework:
@@ -557,7 +436,6 @@ class DatabaseControllerImpl implements DatabaseController {
 
   bool _all(List<bool> booleans) => booleans.every((bool) => bool);
 
-  @override
   bool hasCredentials() =>
       username.isNotEmpty && password.isNotEmpty && school != null && year != 0;
 }

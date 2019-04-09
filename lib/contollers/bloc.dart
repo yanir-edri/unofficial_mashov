@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +35,7 @@ class MasterBloc extends Callback {
         if (_loggedOut) return Future.value(true);
         return SharedPreferences.getInstance()
             .then((prefs) {
-          _databaseController = DatabaseControllerImpl(prefs);
+          _databaseController = DatabaseController(prefs);
           _refreshController = RefreshController();
           _refreshController.attach(this);
           return filesController.initStorage();
@@ -42,14 +43,20 @@ class MasterBloc extends Callback {
             .then((n) => _databaseController.init())
             .then((successful) =>
         !successful
-            ? false
-            : _apiController.getSchools().then((result) {
+            ? Future.value(Result<List<School>>(value: List(),
+            exception: "error initializing database",
+            statusCode: -1))
+            : _apiController.getSchools()).then((result) {
           if (result.isSuccess) {
             _schools = result.value;
+            print("gettings schools was successful");
             return true;
           }
+          print("gettings schools was NOT successful\n");
+          print("error : ${result.exception}\n");
+          print("status code: ${result.statusCode}\n");
           return false;
-        }));
+        });
       });
 
   bool get loginCredentialsSaved => _loginCredentialsSaved;
@@ -82,23 +89,39 @@ class MasterBloc extends Callback {
 
   void tryLogin(String username, String password,
       void onComplete(bool success)) {
+    /*print("tryLogin is called:\n");
+    print("school id ${db.school.id}");
+    print("year: ${db.year}");
+    print("username: $username");
+    print("password: $password");*/
     apiController
         .login(db.school, username, password,
         db.year)
         .then((loginR) {
+      print("loginR.iSsuccess=${loginR.isSuccess}\n");
       if (loginR.isSuccess) {
         //save login info for next login
         //and save session's data
         LoginData data = loginR.value.data;
+        Student student = loginR.value.students.first;
         db
           ..username = username
           ..password = password
           ..sessionId = data.sessionId
-          ..userId = data.userId;
+          ..userId = data.userId
+          ..classCode = student.classCode
+          ..classNum = student.classNum.toString()
+          ..privateName = student.privateName
+          ..familyName = student.familyName;
         //might want to refresh these stuff from here in the future:
 //        Inject.refreshController.refreshAll(
 //            [Api.Grades, Api.Homework, Api.Timetable, Api.BehaveEvents]);
-
+      } else {
+        print("result.exception = ${loginR.exception}\n");
+        NoSuchMethodError error = loginR.exception as NoSuchMethodError;
+        print("error: ${error.stackTrace}");
+        print("${loginR.exception.runtimeType}\n");
+        print("status code: ${loginR.statusCode}");
       }
       onComplete(loginR.isSuccess);
     });
@@ -110,13 +133,28 @@ class MasterBloc extends Callback {
 
   Observable<List> getApiData(Api api, {Map data}) {
     print("Get api data is called with api $api");
-
+    ApiPublishSubject subject = _publishSubjects.firstWhere((p) =>
+    p.api == api && p.data == data, orElse: () => null);
+    if (subject != null) {
+      return subject.ps.stream;
+    }
     // ignore: close_sinks
     PublishSubject<List> ps = PublishSubject();
     refreshController.refresh(api, data: data);
     _publishSubjects.add(ApiPublishSubject(ps, api, db
         .getApiData, data: data));
     return ps.stream;
+  }
+
+  filterData(Api api, List Function(List items) filter, {Map data}) {
+    ApiPublishSubject subject = _publishSubjects.firstWhere((subject) =>
+    subject.api == api && subject.data == data);
+    if (subject == null) {
+      print(
+          "Error: subject with api $api and data $data was not found. Filter was not set.");
+      return;
+    }
+    subject.setFilter(filter);
   }
 
   bool hasCredentials() => db.hasCredentials();
@@ -128,14 +166,49 @@ class MasterBloc extends Callback {
   logout(BuildContext context) {
     _loggedOut = true;
     db.clearData().then((b) {
-      Navigator.pushReplacementNamed(context, "/");
+      Navigator.popUntil(context, (route) => false);
+      Navigator.pushNamed(context, "/");
     });
+  }
+
+  Widget getDrawer(BuildContext context) =>
+      Drawer(child: ListView(padding: EdgeInsets.zero, children: <Widget>[
+        UserAccountsDrawerHeader(accountName: Text(db.displayName),
+            accountEmail: Text(db.displayClass),
+            currentAccountPicture: getPicture()),
+        ListTile(title: const Text("בית"), onTap: () {
+          closeDrawerAndNavigate(context, "/home");
+        }),
+        ListTile(title: const Text("ציונים"), onTap: () {
+          closeDrawerAndNavigate(context, "/grades");
+        })
+      ]));
+
+  void closeDrawerAndNavigate(BuildContext context, String route) {
+    Navigator.pop(context);
+    Navigator.pushNamed(context, route);
   }
 
   @override
   onSuccess(Api api) {
     _publishSubjects.where((ps) => ps.api == api).forEach((ps) => ps.update());
   }
+
+  //If picture is set, return it. Otherwise, return future builder
+  Widget getPicture() =>
+      db.pictureSet ? decoratePicture(db.profilePicture) : FutureBuilder<File>(
+        future: apiController.getPicture(db.userId, db.profilePicture),
+        builder: (context, snap) {
+          return snap.hasData
+              ? decoratePicture(db.profilePicture)
+              : RefreshProgressIndicator();
+        },
+      );
+
+  Widget decoratePicture(File picture) => Center(child: Container(
+      decoration: BoxDecoration(shape: BoxShape.circle,
+          image: DecorationImage(
+              fit: BoxFit.fill, image: FileImage(picture)))));
 }
 
 class ApiPublishSubject {
@@ -143,10 +216,26 @@ class ApiPublishSubject {
   final Map data;
   final PublishSubject<List> ps;
   final Updater updater;
+  List cache;
+
+  //The filter might filter some items, or sort them in a specific order.
+  //The default one does absolutely nothing.
+  List Function(List items) filter = (items) => items;
 
   update() {
-    print("update is called");
-    updater(api, data: data).then((list) => ps.sink.add(list));
+    updater(api, data: data).then((list) {
+      cache = list;
+      ps.sink.add(filter(cache));
+    });
+  }
+
+  setFilter(List Function(List items) filter) {
+    if (filter != null) {
+      this.filter = filter;
+      ps.sink.add(filter(cache));
+    } else {
+      print("Error: filter is null");
+    }
   }
 
   ApiPublishSubject(this.ps, this.api, this.updater, {this.data}) {

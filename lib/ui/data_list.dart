@@ -3,9 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:mashov_api/mashov_api.dart';
 import 'package:unofficial_mashov/contollers/bloc.dart';
-
 typedef Builder = Widget Function(BuildContext context, dynamic item);
-
 class DataList<E> extends StatefulWidget {
   final Builder builder;
   final Api api;
@@ -26,7 +24,6 @@ class DataList<E> extends StatefulWidget {
 }
 
 class DataListState<E> extends State<DataList> /*implements Callback*/ {
-
   List<E> _data = List();
 
   @override
@@ -35,6 +32,7 @@ class DataListState<E> extends State<DataList> /*implements Callback*/ {
         initialData: List(),
         stream: bloc.getApiData(widget.api, data: widget.additionalData),
         builder: (context, snap) {
+          print("yee-haw");
           if (snap.hasData && snap.data.length > 0) {
             print("snap received data\n");
 
@@ -46,7 +44,7 @@ class DataListState<E> extends State<DataList> /*implements Callback*/ {
               //if it's timetable, we will want to take the whole day.
               _data = _data.take(min(_data.length, 4)).toList();
             }
-            _data = _data.reversed.toList();
+//            _data
             return ListView.builder(
                 physics: widget.isDemo && !(_data[0] is Lesson)
                     ? NeverScrollableScrollPhysics()
@@ -114,6 +112,6 @@ class DataListState<E> extends State<DataList> /*implements Callback*/ {
     int day = DateTime
         .now()
         .weekday;
-    return day == 7 ? 0 : day + 1;
+    return day == 7 ? 1 : day + 1;
   }
 }

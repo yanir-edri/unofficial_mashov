@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mashov_api/mashov_api.dart';
 
+typedef Builder = Widget Function(BuildContext context, dynamic item);
+
 class Inject {
 
   //Wraps a widget with RTL directionality.
@@ -34,4 +36,5 @@ class Inject {
   }
 
   static const double margin = 24.0;
+
 }

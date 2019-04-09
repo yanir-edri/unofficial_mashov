@@ -53,7 +53,7 @@ class RefreshController {
           _databaseController.hatamot = data;
           break;
         case Api.Login:
-        //handled in data proccessor
+          print("login is $data\n");
           break;
         default:
           break;

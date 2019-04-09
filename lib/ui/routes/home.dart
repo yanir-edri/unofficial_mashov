@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mashov_api/mashov_api.dart';
 import 'package:unofficial_mashov/contollers/bloc.dart';
-import 'package:unofficial_mashov/data_list.dart';
+import 'package:unofficial_mashov/ui/data_list.dart';
 import 'package:unofficial_mashov/inject.dart';
 
 class HomeRoute extends StatefulWidget {
@@ -75,7 +75,7 @@ class HomeRouteState extends State<HomeRoute> {
   @override
   Widget build(BuildContext context) {
     GlobalKey<ScaffoldState> key = GlobalKey();
-    List<Widget> content = <Widget>[
+    List<Widget> bodyContent = <Widget>[
 
       //Grades list:
       Row(
@@ -100,7 +100,7 @@ class HomeRouteState extends State<HomeRoute> {
                     .of(context)
                     .accentColor)),
             onPressed: () {
-              workingOnIt(key);
+              Navigator.pushReplacementNamed(context, "/grades");
             },
           )
         ],
@@ -183,11 +183,39 @@ class HomeRouteState extends State<HomeRoute> {
 
     ];
 
-    Widget body = Inject.rtl(ListView(
-      children: content,
+    Widget content = Inject.rtl(ListView(
+      children: bodyContent,
     ));
-    return Scaffold(
+    Widget body = CustomScrollView(
+      slivers: <Widget>[
+        SliverAppBar(expandedHeight: 200.0,
+          floating: false,
+          pinned: true,
+          flexibleSpace: FlexibleSpaceBar(
+            title: Column(children: <Widget>[
+              Text("כותרת"),
+              Spacer(),
+              Row(children: <Widget>[
+                Text("ממוצע:"), Spacer(), Text("שעות להיום:")
+              ],),
+              Spacer(),
+              Row(children: <Widget>[
+                FutureBuilder(future: bloc.db.getAverage(),
+                    builder: (context, snap) =>
+                    snap.hasData ? Text("${snap.data}") : Text("")),
+                Spacer(),
+                FutureBuilder(future: bloc.db.todayLessonsCount(),
+                    builder: (context, snap) =>
+                    snap.hasData ? Text("${snap.data}") : Text("")),
+              ],)
+            ],),
+          ),),
+        SliverFillRemaining(child: content)
+      ],
+    )
+    Scaffold s = Scaffold(
       key: key,
+      drawer: bloc.getDrawer(context),
       appBar: AppBar(
           title: Center(
               child: Column(children: [
@@ -204,8 +232,9 @@ class HomeRouteState extends State<HomeRoute> {
                   Text("משהו אחר")
                 ])
               ]))),
-      body: body,
+      body: content,
     );
+    return Inject.rtl(s);
   }
 
   void workingOnIt(GlobalKey<ScaffoldState> key) {
