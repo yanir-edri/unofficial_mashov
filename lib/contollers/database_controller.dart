@@ -166,7 +166,7 @@ class DatabaseController {
 
   Future<List<MessageTitle>> get conversations =>
       _getListFromFile(_conversationsFile, MessageTitle.fromJson).then((l) {
-        l.sort((o1, o2) => o1.sendDate.compareTo(o2.sendDate));
+        l.sort((o1, o2) => o2.sendDate.compareTo(o1.sendDate));
         return l;
       });
 
@@ -199,13 +199,13 @@ class DatabaseController {
 
   Future<List<Hatama>> get hatamot =>
       _getListFromFile(_hatamotFile, Hatama.fromJson).then((l) {
-        l.sort((o1, o2) => o2.name.compareTo(o1.name));
+        l.sort((o1, o2) => o1.name.compareTo(o2.name));
         return l;
       });
 
   Future<List<Homework>> get homework =>
       _getListFromFile(_homeworkFile, Homework.fromJson).then((l) {
-        l.sort((o1, o2) => o2.date.compareTo(o1.date));
+        l.sort((o1, o2) => o1.date.compareTo(o2.date));
         return l;
       });
 

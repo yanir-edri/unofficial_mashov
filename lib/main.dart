@@ -66,10 +66,25 @@ void main() =>
                         filter: (items) {
                           List<Grade> grades = items.cast<Grade>();
                           grades.sort((g1, g2) =>
-                              g1.eventDate.compareTo(g2.eventDate));
+                              g2.eventDate.compareTo(g1.eventDate));
                           return grades;
                         }),
-
+                    MenuFilter(label: "לפי ציון (גבוה לנמוך)",
+                        icon: Icons.arrow_downward,
+                        filter: (items) {
+                          List<Grade> grades = items.cast<Grade>();
+                          grades.sort((g1, g2) => g2.grade.compareTo(g1.grade));
+                          return grades;
+                        }
+                    ),
+                    MenuFilter(label: "לפי ציון(נמוך לגבוה)",
+                        icon: Icons.arrow_upward,
+                        filter: (items) {
+                          List<Grade> grades = items.cast<Grade>();
+                          grades.sort((g1, g2) => g1.grade.compareTo(g2.grade));
+                          return grades;
+                        }
+                    )
                   ])
         }));
 

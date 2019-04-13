@@ -62,12 +62,12 @@ class _DataListPageState<E> extends State<DataListPage> {
   }
 
   _handleFab(BuildContext context, String label) {
-    for (int i = 0; i < widget.filters.length; i++) {
-      MenuFilter filter = widget.filters[i];
-      if (filter.label == label) {
-        bloc.filterData(widget.api, filter.filter);
-        break;
-      }
+    MenuFilter item = widget.filters.firstWhere((f) => f.label == label,
+        orElse: () => null);
+    if (item != null) {
+      bloc.filterData(widget.api, item.filter);
+    } else {
+      print("error filtering data: no filter with label $label");
     }
   }
 }

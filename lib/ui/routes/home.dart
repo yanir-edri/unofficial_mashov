@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mashov_api/mashov_api.dart';
 import 'package:unofficial_mashov/contollers/bloc.dart';
-import 'package:unofficial_mashov/ui/data_list.dart';
 import 'package:unofficial_mashov/inject.dart';
+import 'package:unofficial_mashov/ui/data_list.dart';
 
 class HomeRoute extends StatefulWidget {
   @override
@@ -212,7 +212,7 @@ class HomeRouteState extends State<HomeRoute> {
           ),),
         SliverFillRemaining(child: content)
       ],
-    )
+    );
     Scaffold s = Scaffold(
       key: key,
       drawer: bloc.getDrawer(context),

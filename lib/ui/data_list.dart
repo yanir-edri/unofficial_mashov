@@ -32,10 +32,7 @@ class DataListState<E> extends State<DataList> /*implements Callback*/ {
         initialData: List(),
         stream: bloc.getApiData(widget.api, data: widget.additionalData),
         builder: (context, snap) {
-          print("yee-haw");
           if (snap.hasData && snap.data.length > 0) {
-            print("snap received data\n");
-
             _data = snap.data;
 
             if (_data.isNotEmpty && _data[0] is Lesson) {
