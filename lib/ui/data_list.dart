@@ -23,7 +23,8 @@ class DataList<E> extends StatefulWidget {
   }
 }
 
-class DataListState<E> extends State<DataList> /*implements Callback*/ {
+class DataListState<E> extends State<DataList>
+    with AutomaticKeepAliveClientMixin<DataList> {
   List<E> _data = List();
 
   @override
@@ -53,17 +54,14 @@ class DataListState<E> extends State<DataList> /*implements Callback*/ {
             print("snapshot error\n");
             return const Center(child: const Text("טעינת המידע נכשלה"));
           }
-          print("data list loading, returning circular progress view\n");
-          return Container(
-              margin: EdgeInsets.all(100), child: CircularProgressIndicator());
+          return Center(
+            child: Container(
+                margin: EdgeInsets.all(100),
+                child: CircularProgressIndicator()),
+          );
         },
       );
 
-  @override
-  void initState() {
-    super.initState();
-    bloc.refreshController.refresh(widget.api);
-  }
 
   @override
   void dispose() {
@@ -75,9 +73,6 @@ class DataListState<E> extends State<DataList> /*implements Callback*/ {
     //the days of the mashov go from 1 to 7, not from 0 to 6.
     List<Lesson> timetable = data.cast<Lesson>();
     if (isDemo) {
-      print("today is ${DateTime
-          .now()
-          .weekday}");
       if (today == 7) {
         //get some sleep on saturday!
         timetable = [];
@@ -111,4 +106,8 @@ class DataListState<E> extends State<DataList> /*implements Callback*/ {
         .weekday;
     return day == 7 ? 1 : day + 1;
   }
+
+  //If the data list is a demo, we do not want to rebuild it every time we scroll
+  @override
+  bool get wantKeepAlive => widget.isDemo;
 }

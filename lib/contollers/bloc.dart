@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:mashov_api/mashov_api.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:unofficial_mashov/api_ps.dart';
 import 'package:unofficial_mashov/contollers/database_controller.dart';
 import 'package:unofficial_mashov/contollers/files_controller.dart';
 import 'package:unofficial_mashov/contollers/refresh_controller.dart';
@@ -13,14 +14,23 @@ import 'package:unofficial_mashov/contollers/refresh_controller.dart';
 typedef Future<List> Updater(Api api, {Map data});
 
 class MasterBloc extends Callback {
-
-
   ApiController _apiController = MashovApi.getController();
   DatabaseController _databaseController;
   RefreshController _refreshController;
   bool _loginCredentialsSaved = false;
   bool _loggedOut = false;
 
+  MessagesCount _count;
+
+  Future<MessagesCount> getMessagesCount() =>
+      Future(() {
+        return _count != null
+            ? _count
+            : _apiController.getMessagesCount().then((r) => r.value);
+      });
+
+  Future<num> getNewMessagesCount() =>
+      getMessagesCount().then((count) => count.newMessages);
 
   Future<bool> isConnected() =>
       Connectivity()
@@ -43,16 +53,16 @@ class MasterBloc extends Callback {
             .then((n) => _databaseController.init())
             .then((successful) =>
         !successful
-            ? Future.value(Result<List<School>>(value: List(),
+            ? Future.value(Result<List<School>>(
+            value: List(),
             exception: "error initializing database",
             statusCode: -1))
-            : _apiController.getSchools()).then((result) {
+            : _apiController.getSchools())
+            .then((result) {
           if (result.isSuccess) {
             _schools = result.value;
-            print("gettings schools was successful");
             return true;
           }
-          print("gettings schools was NOT successful\n");
           print("error : ${result.exception}\n");
           print("status code: ${result.statusCode}\n");
           return false;
@@ -65,14 +75,11 @@ class MasterBloc extends Callback {
 
   ApiController get apiController => _apiController;
 
-
   RefreshController get refreshController => _refreshController;
-
 
   DatabaseController get db => _databaseController;
   List<School> _schools;
   List<ApiPublishSubject> _publishSubjects = List();
-
 
   setYearAndSchool(School school, int year) {
     db
@@ -82,10 +89,10 @@ class MasterBloc extends Callback {
 
   List<School> getSuggestions(String pattern) =>
       _schools
-        .where((school) =>
-    school.name.startsWith(pattern) ||
-        school.id.toString().startsWith(pattern))
-        .toList();
+          .where((school) =>
+      school.name.startsWith(pattern) ||
+          school.id.toString().startsWith(pattern))
+          .toList();
 
   void tryLogin(String username, String password,
       void onComplete(bool success)) {
@@ -94,11 +101,7 @@ class MasterBloc extends Callback {
     print("year: ${db.year}");
     print("username: $username");
     print("password: $password");*/
-    apiController
-        .login(db.school, username, password,
-        db.year)
-        .then((loginR) {
-      print("loginR.iSsuccess=${loginR.isSuccess}\n");
+    apiController.login(db.school, username, password, db.year).then((loginR) {
       if (loginR.isSuccess) {
         //save login info for next login
         //and save session's data
@@ -133,22 +136,23 @@ class MasterBloc extends Callback {
 
   Observable<List> getApiData(Api api, {Map data}) {
     print("Get api data is called with api $api");
-    ApiPublishSubject subject = _publishSubjects.firstWhere((p) =>
-    p.api == api && p.data == data, orElse: () => null);
+    ApiPublishSubject subject = _publishSubjects
+        .firstWhere((p) => p.api == api && p.data == data, orElse: () => null);
     if (subject != null) {
+      print("subject was not null\n");
+      Future.delayed(Duration(milliseconds: 100), () => subject.flush());
       return subject.ps.stream;
     }
     // ignore: close_sinks
     PublishSubject<List> ps = PublishSubject();
+    _publishSubjects.add(ApiPublishSubject(ps, api, db.getApiData, data: data));
     refreshController.refresh(api, data: data);
-    _publishSubjects.add(ApiPublishSubject(ps, api, db
-        .getApiData, data: data));
     return ps.stream;
   }
 
   filterData(Api api, List Function(List items) filter, {Map data}) {
-    ApiPublishSubject subject = _publishSubjects.firstWhere((subject) =>
-    subject.api == api && subject.data == data);
+    ApiPublishSubject subject = _publishSubjects
+        .firstWhere((subject) => subject.api == api && subject.data == data);
     if (subject == null) {
       print(
           "Error: subject with api $api and data $data was not found. Filter was not set.");
@@ -166,21 +170,32 @@ class MasterBloc extends Callback {
   logout(BuildContext context) {
     _loggedOut = true;
     db.clearData().then((b) {
-      Navigator.popUntil(context, (route) => false);
-      Navigator.pushNamed(context, "/");
+      Navigator.popUntil(context, (route) => route.isFirst);
+      Navigator.pushReplacementNamed(context, "/");
     });
   }
 
   Widget getDrawer(BuildContext context) =>
-      Drawer(child: ListView(padding: EdgeInsets.zero, children: <Widget>[
-        UserAccountsDrawerHeader(accountName: Text(db.displayName),
+      Drawer(
+          child: ListView(padding: EdgeInsets.zero, children: <Widget>[
+            UserAccountsDrawerHeader(
+                accountName: Text(db.displayName),
             accountEmail: Text(db.displayClass),
             currentAccountPicture: getPicture()),
-        ListTile(title: const Text("בית"), onTap: () {
-          closeDrawerAndNavigate(context, "/home");
-        }),
-        ListTile(title: const Text("ציונים"), onTap: () {
-          closeDrawerAndNavigate(context, "/grades");
+            ListTile(
+                title: const Text("בית"),
+                onTap: () {
+                  closeDrawerAndNavigate(context, "/home");
+                }),
+            ListTile(
+                title: const Text("ציונים"),
+                onTap: () {
+                  closeDrawerAndNavigate(context, "/grades");
+                }),
+            ListTile(
+                title: const Text("התנתק/י"),
+                onTap: () {
+                  bloc.logout(context);
         })
       ]));
 
@@ -196,7 +211,9 @@ class MasterBloc extends Callback {
 
   //If picture is set, return it. Otherwise, return future builder
   Widget getPicture() =>
-      db.pictureSet ? decoratePicture(db.profilePicture) : FutureBuilder<File>(
+      db.pictureSet
+          ? decoratePicture(db.profilePicture)
+          : FutureBuilder<File>(
         future: apiController.getPicture(db.userId, db.profilePicture),
         builder: (context, snap) {
           return snap.hasData
@@ -205,43 +222,14 @@ class MasterBloc extends Callback {
         },
       );
 
-  Widget decoratePicture(File picture) => Center(child: Container(
-      decoration: BoxDecoration(shape: BoxShape.circle,
-          image: DecorationImage(
-              fit: BoxFit.fill, image: FileImage(picture)))));
+  Widget decoratePicture(File picture) =>
+      Center(
+          child: Container(
+              decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  image: DecorationImage(
+                      fit: BoxFit.fill, image: FileImage(picture)))));
 }
 
-class ApiPublishSubject {
-  final Api api;
-  final Map data;
-  final PublishSubject<List> ps;
-  final Updater updater;
-  List cache;
-
-  //The filter might filter some items, or sort them in a specific order.
-  //The default one does absolutely nothing.
-  List Function(List items) filter = (items) => items;
-
-  update() {
-    updater(api, data: data).then((list) {
-      cache = list;
-      ps.sink.add(filter(cache));
-    });
-  }
-
-  setFilter(List Function(List items) filter) {
-    if (filter != null) {
-      this.filter = filter;
-      ps.sink.add(filter(cache));
-    } else {
-      print("Error: filter is null");
-    }
-  }
-
-  ApiPublishSubject(this.ps, this.api, this.updater, {this.data}) {
-    update();
-  }
-}
 
 MasterBloc bloc = MasterBloc();
-

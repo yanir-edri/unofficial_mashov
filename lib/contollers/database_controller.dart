@@ -5,9 +5,11 @@ import 'dart:io';
 import 'package:mashov_api/mashov_api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unofficial_mashov/contollers/files_controller.dart';
+import 'package:unofficial_mashov/contollers/refresh_controller.dart';
 
-class DatabaseController {
+class DatabaseController extends Callback {
   SharedPreferences _prefs;
+
 
   static File _conversationsFile;
   static File _behaveEventsFile;
@@ -20,52 +22,6 @@ class DatabaseController {
   static File _hatamotFile;
   static File _homeworkFile;
 
-  ///Returns true if successful, false otherwise.
-  Future<bool> init() {
-    List<Future> futures = [
-      filesController
-          .getFile("conversations.json")
-          .then((file) => _conversationsFile = file),
-      filesController
-          .getFile("behave_events.json")
-          .then((file) => _behaveEventsFile = file),
-      filesController
-          .getContactsGroupFile("default")
-          .then((file) => _contactsFile = file),
-      filesController.getFile("grades.json").then((file) => _gradesFile = file),
-      filesController
-          .getFile("bagrut.json")
-          .then((file) => _bagrutGradesFile = file),
-      filesController.getFile("groups.json").then((file) => _groupsFile = file),
-      filesController
-          .getFile("timetable.json")
-          .then((file) => _timetableFile = file),
-      filesController.getFile("maakav.json").then((file) => _maakavFile = file),
-      filesController
-          .getFile("hatamot.json")
-          .then((file) => _hatamotFile = file),
-      filesController
-          .getFile("homework.json")
-          .then((file) => _homeworkFile = file),
-    ];
-    return Future.wait(futures).then((l) => true).catchError((error) {
-      print(error);
-      return false;
-    });
-  }
-
-  /*Future.wait<File>().then((list) => true).catchError((error) => false);*/
-
-  DatabaseController(SharedPreferences prefs) {
-    ///it's easier to get it injected rather than messing it up trying to await it's future.
-    _prefs = prefs;
-    //make sure prefs will not throw exceptions
-    fillPrefs();
-  }
-
-  ///prefs:
-
-  ///getters
 
   String get password => _prefs.getString("password") ?? "";
 
@@ -109,7 +65,8 @@ class DatabaseController {
 
   String get classFormatted => "$classCode\'$classNum";
 
-  ///setters
+  MessagesCount get messagesCount =>
+      MessagesCount.fromJson(json.decode(_prefs.getString("messagesCount")));
 
   set id(String value) => _prefs.setString("id", value);
 
@@ -143,9 +100,9 @@ class DatabaseController {
 
   set classNum(String value) => _prefs.setString("classNum", value);
 
-  ///end prefs
+  set messagesCount(MessagesCount value) =>
+      _prefs.setString("messagesCount", json.encode(value));
 
-  ///files
 
   Future<List<BehaveEvent>> get behaveEvents =>
       _getListFromFile(_behaveEventsFile, BehaveEvent.fromJson).then((l) {
@@ -251,7 +208,52 @@ class DatabaseController {
             : null));
   }
 
-  ///end files
+
+  ///Returns true if successful, false otherwise.
+  Future<bool> init() {
+    List<Future> futures = [
+      filesController
+          .getFile("conversations.json")
+          .then((file) => _conversationsFile = file),
+      filesController
+          .getFile("behave_events.json")
+          .then((file) => _behaveEventsFile = file),
+      filesController
+          .getContactsGroupFile("default")
+          .then((file) => _contactsFile = file),
+      filesController.getFile("grades.json").then((file) => _gradesFile = file),
+      filesController
+          .getFile("bagrut.json")
+          .then((file) => _bagrutGradesFile = file),
+      filesController.getFile("groups.json").then((file) => _groupsFile = file),
+      filesController
+          .getFile("timetable.json")
+          .then((file) => _timetableFile = file),
+      filesController.getFile("maakav.json").then((file) => _maakavFile = file),
+      filesController
+          .getFile("hatamot.json")
+          .then((file) => _hatamotFile = file),
+      filesController
+          .getFile("homework.json")
+          .then((file) => _homeworkFile = file),
+    ];
+    return Future.wait(futures).then((l) => true).catchError((error) {
+      print(error);
+      return false;
+    });
+  }
+
+
+  DatabaseController(SharedPreferences prefs) {
+    ///it's easier to get it injected rather than messing it up trying to await it's future.
+    _prefs = prefs;
+    //make sure prefs will not throw exceptions
+    fillPrefs();
+  }
+
+  ///prefs:
+
+
 
   /// some nice utility functions
 
@@ -288,9 +290,16 @@ class DatabaseController {
           .catchError((error) => false);
 
   Future<num> getAverage() =>
-      grades.then((grades) =>
-      grades.map<num>((g) => g.grade).toList().reduce((n1, n2) => n1 + n2) /
-          grades.length);
+      grades.then((grades) {
+        if (grades.isEmpty) {
+          return 0;
+        } else {
+          Iterable<int> gradesNum = grades.where((g) => g.grade != 0).map((
+              g) => g.grade);
+          int len = gradesNum.length;
+          return gradesNum.reduce((n1, n2) => n1 + n2) / len;
+        }
+      });
 
   Future<int> todayLessonsCount() {
     int today = DateTime
@@ -299,11 +308,11 @@ class DatabaseController {
     today = today == 7 ? 1 : today + 1;
     return timetable.then(
             (lessons) =>
+        lessons.isEmpty ? 0 :
         lessons
             .where((lesson) => lesson.day == today)
             .length);
   }
-
   Future<bool> hasEnoughData() =>
       Future.wait([
         File(profilePicturePath).exists(),
@@ -417,6 +426,7 @@ class DatabaseController {
         return maakavReports;
       case Api.Hatamot:
         return hatamot;
+        break;
       default:
         print(
             "error: trying to get list api ${api

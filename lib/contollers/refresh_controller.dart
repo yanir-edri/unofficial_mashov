@@ -20,7 +20,7 @@ class RefreshController {
       print("proccessing raw data of api $api, data=$data");
       switch (api) {
         case Api.Grades:
-          bloc.db.grades = data;
+          _databaseController.grades = data;
           break;
         case Api.BagrutGrades:
           _databaseController.bagrutGrades = data;
@@ -67,6 +67,7 @@ class RefreshController {
   }
 
   bool refresh(Api api, {Map data}) {
+    print("refresh called with api $api\n");
     if (_shouldPerformLogin) {
       _queuedRequests.add(api);
       _login();
@@ -193,7 +194,7 @@ class RefreshController {
   }
 }
 
-abstract class Callback {
+class Callback {
   onSuccess(Api api) {}
 
   onFail(Api api) {}

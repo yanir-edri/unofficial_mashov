@@ -15,6 +15,45 @@ class Inject {
         body: Container(margin: EdgeInsets.all(16.0), child: w)));
   }
 
+  static PreferredSizeWidget appbar() =>
+      PreferredSize(
+          preferredSize: Size.fromHeight(150),
+          child: AppBar(title: Column(children: <Widget>[
+            Center(child: Text("משוב")),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(children: <Widget>[
+                Text("average"),
+                Spacer(),
+                Text("hours")
+              ],),
+            )
+          ],)));
+
+
+/*
+
+
+AppBar(
+          title: Center(
+              child: Column(children: [
+                Text("משוב"),
+                Row(children: [
+                  GestureDetector(
+                    child: Text("התנתק/י"),
+                    onTap: () {
+                      print("logging out");
+                      bloc.logout(context);
+                    },
+                  ),
+                  Spacer(),
+                  Text("משהו אחר")
+                ])
+              ])))
+
+
+*/
+
   //turn YYYY-MM-DD'T'HH:MM:SS into DD/MM/YYYY
   static String dateTimeToDateString(DateTime d) =>
       d
