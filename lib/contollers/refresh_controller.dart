@@ -62,6 +62,8 @@ class RefreshController {
     _apiController.attachDataProcessor((dynamic data, Api api) {
       if (api == Api.Login) {
         _databaseController.setLoginData(data);
+      } else if (api == Api.MessagesCount) {
+        _databaseController.messagesCount = data;
       }
     });
   }
@@ -116,10 +118,12 @@ class RefreshController {
       case Api.Homework:
         request = _apiController.getHomework(userId);
         break;
+      case Api.MessagesCount:
+        request = _apiController.getMessagesCount();
+        break;
       default:
         break;
     }
-//    print("request==null is ${request == null}");
     if (request != null) {
       request.then((result) {
         print("request of api $api was ${result.isSuccess}");

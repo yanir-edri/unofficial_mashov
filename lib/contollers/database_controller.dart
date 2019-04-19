@@ -65,8 +65,12 @@ class DatabaseController extends Callback {
 
   String get classFormatted => "$classCode\'$classNum";
 
-  MessagesCount get messagesCount =>
-      MessagesCount.fromJson(json.decode(_prefs.getString("messagesCount")));
+  MessagesCount get messagesCount {
+    String value = _prefs.getString("messagesCount");
+    if (value == null || value.isEmpty) return null;
+    return MessagesCount.fromJson(
+        json.decode(_prefs.getString("messagesCount")));
+  }
 
   set id(String value) => _prefs.setString("id", value);
 
@@ -102,6 +106,7 @@ class DatabaseController extends Callback {
 
   set messagesCount(MessagesCount value) =>
       _prefs.setString("messagesCount", json.encode(value));
+
 
 
   Future<List<BehaveEvent>> get behaveEvents =>
@@ -301,6 +306,7 @@ class DatabaseController extends Callback {
         }
       });
 
+
   Future<int> todayLessonsCount() {
     int today = DateTime
         .now()
@@ -401,37 +407,123 @@ class DatabaseController extends Callback {
     year = data.data.year;
   }
 
-  Future<List> getApiData(Api api, {Map data}) {
-    switch (api) {
-      case Api.Homework:
-        return homework;
-      case Api.Grades:
-        return grades;
-      case Api.Groups:
-        return groups;
-      case Api.Timetable:
-        return timetable;
-      case Api.Alfon:
-        if (data != null) if (data.containsKey("groupId"))
-          return getContacts(groupId: data["groupId"]);
-        return getContacts();
-      case Api.BagrutGrades:
-        return bagrutGrades;
-      case Api.BehaveEvents:
-        return behaveEvents;
-      case Api.Messages:
-      //TODO: older messages handling(?)
-        return conversations;
-      case Api.Maakav:
-        return maakavReports;
-      case Api.Hatamot:
-        return hatamot;
-        break;
-      default:
-        print(
-            "error: trying to get list api ${api
-                .toString()} $api. returning grades");
-        return grades;
+  Future getApiData(Api api, {Map data}) {
+    if (data["overview"]) {
+      switch (api) {
+//        case Api.Homework:
+//          return homework;
+        case Api.MessagesCount:
+          if (messagesCount != null) {
+            return Future.value(messagesCount.newMessages);
+          } else {
+            return Future.value(0);
+          }
+          break;
+        case Api.Grades:
+          if (data.containsKey("amount")) {
+            return grades.then((grades) => grades.length);
+          }
+          return grades.then((grades) {
+            if (grades.isEmpty) {
+              return 0;
+            } else {
+              Iterable<int> gradesNum = grades /*.where((g) => g.grade != 0)*/
+                  .map((g) => g.grade);
+              int len = gradesNum.length;
+              return gradesNum.reduce((n1, n2) => n1 + n2) / len;
+            }
+          });
+//        case Api.Groups:
+//          return groups;
+        case Api.Timetable:
+        //returns today's lessons count
+          int today = DateTime
+              .now()
+              .weekday;
+          today = today == 7 ? 1 : today + 1;
+          return timetable.then(
+                  (lessons) =>
+              lessons.isEmpty ? 0 :
+              lessons
+                  .where((lesson) => lesson.day == today)
+                  .length);
+//        case Api.Alfon:
+//          if (data != null) if (data.containsKey("groupId"))
+//            return getContacts(groupId: data["groupId"]);
+//          return getContacts();
+        case Api.BagrutGrades:
+        //just like grades
+          if (data.containsKey("amount")) {
+            return grades.then((grades) => grades.length);
+          }
+          return grades.then((grades) {
+            if (grades.isEmpty) {
+              return 0;
+            } else {
+              Iterable<int> gradesNum = grades /*.where((g) => g.grade != 0)*/
+                  .map((g) => g.grade);
+              int len = gradesNum.length;
+              return gradesNum.reduce((n1, n2) => n1 + n2) / len;
+            }
+          });
+        case Api.BehaveEvents:
+        //justified/un-justified
+          if (data.containsKey("justified")) {
+            return behaveEvents.then((events) =>
+            events
+                .where((e) => e.justificationId != 0)
+                .length);
+          } else {
+            return behaveEvents.then((events) =>
+            events
+                .where((e) => e.justificationId == 0)
+                .length);
+          }
+          break;
+//        case Api.Messages:
+//          return conversations;
+//        case Api.Maakav:
+//          return maakavReports;
+//        case Api.Hatamot:
+//          return hatamot;
+//          break;
+        default:
+          print(
+              "error: trying to get overview of api $api. returning -1");
+          return Future.value(-1);
+      }
+    } else {
+      switch (api) {
+        case Api.Homework:
+          return homework;
+        case Api.Grades:
+          return grades;
+        case Api.Groups:
+          return groups;
+        case Api.Timetable:
+          return timetable;
+        case Api.Alfon:
+          if (data != null) if (data.containsKey("groupId"))
+            return getContacts(groupId: data["groupId"]);
+          return getContacts();
+        case Api.BagrutGrades:
+          return bagrutGrades;
+        case Api.BehaveEvents:
+          return behaveEvents;
+        case Api.Messages:
+        //TODO: older messages handling(?)
+          return conversations;
+        case Api.Maakav:
+          return maakavReports;
+        case Api.Hatamot:
+          return hatamot;
+          break;
+        default:
+          print(
+              "error: trying to get list api ${api
+                  .toString()} $api. returning grades");
+          return grades;
+      }
     }
   }
 

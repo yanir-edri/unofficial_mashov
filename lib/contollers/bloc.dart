@@ -11,26 +11,13 @@ import 'package:unofficial_mashov/contollers/database_controller.dart';
 import 'package:unofficial_mashov/contollers/files_controller.dart';
 import 'package:unofficial_mashov/contollers/refresh_controller.dart';
 
-typedef Future<List> Updater(Api api, {Map data});
-
 class MasterBloc extends Callback {
   ApiController _apiController = MashovApi.getController();
   DatabaseController _databaseController;
   RefreshController _refreshController;
   bool _loginCredentialsSaved = false;
   bool _loggedOut = false;
-
-  MessagesCount _count;
-
-  Future<MessagesCount> getMessagesCount() =>
-      Future(() {
-        return _count != null
-            ? _count
-            : _apiController.getMessagesCount().then((r) => r.value);
-      });
-
-  Future<num> getNewMessagesCount() =>
-      getMessagesCount().then((count) => count.newMessages);
+  Duration _100ms = const Duration(milliseconds: 100);
 
   Future<bool> isConnected() =>
       Connectivity()
@@ -135,23 +122,39 @@ class MasterBloc extends Callback {
   }
 
   Observable<List> getApiData(Api api, {Map data}) {
-    print("Get api data is called with api $api");
-    ApiPublishSubject subject = _publishSubjects
+    if (data == null)
+      data = {"overview": false};
+    else
+      data["overview"] = false;
+    return _getData<List>(api, data: data);
+  }
+
+  Observable<num> getOverviewData(Api api, {Map data}) {
+    if (data == null)
+      data = {"overview": true};
+    else
+      data["overview"] = true;
+
+    return _getData<num>(api, data: data);
+  }
+
+  Observable<E> _getData<E>(Api api, {Map data}) {
+    ApiPublishSubject<E> subject = _publishSubjects
         .firstWhere((p) => p.api == api && p.data == data, orElse: () => null);
     if (subject != null) {
       print("subject was not null\n");
-      Future.delayed(Duration(milliseconds: 100), () => subject.flush());
+      Future.delayed(_100ms, () => subject.flush());
       return subject.ps.stream;
     }
     // ignore: close_sinks
-    PublishSubject<List> ps = PublishSubject();
+    PublishSubject<E> ps = PublishSubject();
     _publishSubjects.add(ApiPublishSubject(ps, api, db.getApiData, data: data));
     refreshController.refresh(api, data: data);
     return ps.stream;
   }
 
   filterData(Api api, List Function(List items) filter, {Map data}) {
-    ApiPublishSubject subject = _publishSubjects
+    ApiPublishSubject<List> subject = _publishSubjects
         .firstWhere((subject) => subject.api == api && subject.data == data);
     if (subject == null) {
       print(
@@ -196,7 +199,7 @@ class MasterBloc extends Callback {
                 title: const Text("התנתק/י"),
                 onTap: () {
                   bloc.logout(context);
-        })
+                })
       ]));
 
   void closeDrawerAndNavigate(BuildContext context, String route) {
@@ -230,6 +233,5 @@ class MasterBloc extends Callback {
                   image: DecorationImage(
                       fit: BoxFit.fill, image: FileImage(picture)))));
 }
-
 
 MasterBloc bloc = MasterBloc();

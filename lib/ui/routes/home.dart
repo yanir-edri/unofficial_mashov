@@ -1,10 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:mashov_api/mashov_api.dart';
 import 'package:unofficial_mashov/contollers/bloc.dart';
 import 'package:unofficial_mashov/inject.dart';
 import 'package:unofficial_mashov/ui/data_list.dart';
+import 'package:unofficial_mashov/ui/overview_item.dart';
 
 class HomeRoute extends StatefulWidget {
   @override
@@ -17,7 +16,6 @@ class HomeRouteState extends State<HomeRoute> {
   Widget gradesList;
   Widget homeworkList;
   Widget todayList;
-  int _newMessagesCache = -1;
 
   @override
   void initState() {
@@ -202,31 +200,6 @@ class HomeRouteState extends State<HomeRoute> {
         content: Inject.rtl(Text("אני...אני עובד על זה! חכו לגרסה הבאה :)"))));
   }
 
-  Column overviewItemBuilder({@required String title,
-    @required Future<num> future,
-    int precision: 1,
-    TextStyle headerStyle:
-    const TextStyle(color: Colors.white, fontSize: 20.0),
-    TextStyle valueStyle:
-    const TextStyle(color: Colors.white, fontSize: 32.0),
-    isZeroGood: false}) =>
-      Column(
-        children: <Widget>[
-          FutureBuilder<num>(
-              future: future,
-              builder: (context, snap) {
-                print("overview($title): recieved data ${snap.data}");
-                return snap.hasData &&
-                    (isZeroGood || snap.data != 0)
-                    ? Text(
-                    "${snap.data.toDouble() == snap.data.roundToDouble() ? snap
-                        .data.toInt() : snap.data.toStringAsFixed(precision)}",
-                    style: valueStyle)
-                    : Text("");
-              }),
-          Text(title, style: headerStyle)
-        ],
-      );
 
   List<Widget> headerBuilderV2(BuildContext context, bool innerBoxIsScrolled) {
     return <Widget>[
@@ -241,20 +214,16 @@ class HomeRouteState extends State<HomeRoute> {
             child: Row(
               children: <Widget>[
                 Spacer(),
-                overviewItemBuilder(
-                    title: "ממוצע", future: bloc.db.getAverage()),
+                OverviewItem(
+                    title: "ממוצע", stream: bloc.getOverviewData(Api.Grades)),
                 Spacer(),
-                overviewItemBuilder(
-                    title: "שעות להיום", future: bloc.db.todayLessonsCount()),
+                OverviewItem(
+                    title: "שעות להיום",
+                    stream: bloc.getOverviewData(Api.Timetable)),
                 Spacer(),
-                overviewItemBuilder(
+                OverviewItem(
                     title: "הודעות חדשות",
-                    future: _newMessagesCache == -1
-                        ? bloc.getNewMessagesCount().then((n) {
-                      _newMessagesCache = n;
-                      return n;
-                    })
-                        : Future.value(_newMessagesCache),
+                    stream: bloc.getOverviewData(Api.MessagesCount),
                     isZeroGood: true),
                 Spacer()
               ],
