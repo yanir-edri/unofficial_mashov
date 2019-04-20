@@ -31,7 +31,7 @@ class ApiPublishSubject<E> {
     }
   }
 
-  setFilter(E Function(E items) filter) {
+  setFilter(E Function(E data) filter) {
     if (filter != null) {
       this.filter = filter;
       ps.sink.add(filter(cache));

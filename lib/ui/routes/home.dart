@@ -200,7 +200,6 @@ class HomeRouteState extends State<HomeRoute> {
         content: Inject.rtl(Text("אני...אני עובד על זה! חכו לגרסה הבאה :)"))));
   }
 
-
   List<Widget> headerBuilderV2(BuildContext context, bool innerBoxIsScrolled) {
     return <Widget>[
       SliverAppBar(
@@ -218,6 +217,7 @@ class HomeRouteState extends State<HomeRoute> {
                     title: "ממוצע", stream: bloc.getOverviewData(Api.Grades)),
                 Spacer(),
                 OverviewItem(
+                    isZeroGood: true,
                     title: "שעות להיום",
                     stream: bloc.getOverviewData(Api.Timetable)),
                 Spacer(),
@@ -303,6 +303,4 @@ class HomeRouteState extends State<HomeRoute> {
           ),
         ),
       ];
-
-
 }

@@ -17,7 +17,7 @@ class RefreshController {
     _apiController = bloc.apiController;
     _databaseController = bloc.db;
     _apiController.attachRawDataProcessor((dynamic data, Api api) {
-      print("proccessing raw data of api $api, data=$data");
+//      print("proccessing raw data of api $api, data=$data");
       switch (api) {
         case Api.Grades:
           _databaseController.grades = data;
@@ -72,7 +72,7 @@ class RefreshController {
     print("refresh called with api $api\n");
     if (_shouldPerformLogin) {
       _queuedRequests.add(api);
-      _login();
+      login();
     }
     if (_runningRequests.contains(api) || _queuedRequests.contains(api))
       return false;
@@ -126,12 +126,12 @@ class RefreshController {
     }
     if (request != null) {
       request.then((result) {
-        print("request of api $api was ${result.isSuccess}");
+//        print("request of api $api was ${result.isSuccess}");
         if (result.isSuccess) {
           _runningRequests.remove(api);
           _callbacks.forEach((c) => c.onSuccess(api));
         } else if (result.isNeedToLogin) {
-          _login();
+          login();
         } else if (result.isForbidden) {
           _runningRequests.remove(api);
           _callbacks.forEach((c) => c.onSuspend());
@@ -143,25 +143,33 @@ class RefreshController {
     }
   }
 
-  _login() {
+  Future<bool> login() {
     if (!_isPerformingLogin) {
       _isPerformingLogin = true;
       _queuedRequests += _runningRequests;
       _runningRequests.clear();
-      _apiController
+      return _apiController
           .login(_databaseController.school, _databaseController.username,
           _databaseController.password, _databaseController.year)
           .then((result) {
         if (result.isSuccess) {
-          Login login = result.value;
           if (result.isOk) {
+            LoginData data = result.value.data;
+            Student student = result.value.students.first;
             _databaseController
-              ..sessionId = login.data.sessionId
-              ..year = login.data.year;
+              ..sessionId = data.sessionId
+              ..userId = data.userId
+              ..classCode = student.classCode
+              ..classNum = student.classNum.toString()
+              ..privateName = student.privateName
+              ..familyName = student.familyName;
+
             _isPerformingLogin = false;
             _shouldPerformLogin = false;
             _queuedRequests.forEach((api) => _refreshInternal(api));
             _queuedRequests.clear();
+            _callbacks.forEach((c) => c.onLogin());
+            return true;
           } else {
             _isPerformingLogin = false;
             _shouldPerformLogin = false;
@@ -176,12 +184,17 @@ class RefreshController {
               _shouldPerformLogin = true;
               _callbacks.forEach((c) => c.onLoginFail());
             }
+            return false;
           }
         } else {
           //something bad happened
+          print(
+              "some REALLY bad error. I mean, you should contact a programmer or something.\n");
+          return false;
         }
       });
     }
+    return Future.value(true);
   }
 
   attach(Callback callback) {

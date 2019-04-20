@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -9,10 +10,12 @@ class DataList<E> extends StatefulWidget {
   final Api api;
   final Map additionalData;
   final bool isDemo;
+  final Stream<List<E>> stream;
 
   DataList({Key key,
     this.builder,
     @required this.api,
+    this.stream,
     this.isDemo,
     this.additionalData})
       : super(key: key);
@@ -21,6 +24,7 @@ class DataList<E> extends StatefulWidget {
   DataListState<E> createState() {
     return new DataListState<E>();
   }
+
 }
 
 class DataListState<E> extends State<DataList>
@@ -31,7 +35,9 @@ class DataListState<E> extends State<DataList>
   Widget build(BuildContext context) =>
       StreamBuilder<List>(
         initialData: List(),
-        stream: bloc.getApiData(widget.api, data: widget.additionalData),
+        //stream won't be null in data list page
+        stream: widget.stream != null ? widget.stream : bloc.getApiData(
+            widget.api, data: widget.additionalData),
         builder: (context, snap) {
           if (snap.hasData && snap.data.length > 0) {
             _data = snap.data;
@@ -66,6 +72,7 @@ class DataListState<E> extends State<DataList>
   @override
   void dispose() {
     super.dispose();
+//    widget._processedStream.close();
   }
 
 
@@ -109,5 +116,5 @@ class DataListState<E> extends State<DataList>
 
   //If the data list is a demo, we do not want to rebuild it every time we scroll
   @override
-  bool get wantKeepAlive => widget.isDemo;
+  bool get wantKeepAlive => true;
 }

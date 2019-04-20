@@ -104,8 +104,16 @@ class DatabaseController extends Callback {
 
   set classNum(String value) => _prefs.setString("classNum", value);
 
+
+  String _countToJson(MessagesCount value) => """{
+    "allMessages": ${value.allMessages},
+    "inboxMessages": ${value.inboxMessages},
+    "newMessages": ${value.newMessages},
+    "unreadMessages": ${value.unreadMessages}
+  }""";
+
   set messagesCount(MessagesCount value) =>
-      _prefs.setString("messagesCount", json.encode(value));
+      _prefs.setString("messagesCount", _countToJson(value));
 
 
 

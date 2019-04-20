@@ -17,7 +17,10 @@ class MasterBloc extends Callback {
   RefreshController _refreshController;
   bool _loginCredentialsSaved = false;
   bool _loggedOut = false;
+
+  // ignore: non_constant_identifier_names
   Duration _100ms = const Duration(milliseconds: 100);
+  Map<String, num> cache = {};
 
   Future<bool> isConnected() =>
       Connectivity()
@@ -83,38 +86,10 @@ class MasterBloc extends Callback {
 
   void tryLogin(String username, String password,
       void onComplete(bool success)) {
-    /*print("tryLogin is called:\n");
-    print("school id ${db.school.id}");
-    print("year: ${db.year}");
-    print("username: $username");
-    print("password: $password");*/
-    apiController.login(db.school, username, password, db.year).then((loginR) {
-      if (loginR.isSuccess) {
-        //save login info for next login
-        //and save session's data
-        LoginData data = loginR.value.data;
-        Student student = loginR.value.students.first;
-        db
-          ..username = username
-          ..password = password
-          ..sessionId = data.sessionId
-          ..userId = data.userId
-          ..classCode = student.classCode
-          ..classNum = student.classNum.toString()
-          ..privateName = student.privateName
-          ..familyName = student.familyName;
-        //might want to refresh these stuff from here in the future:
-//        Inject.refreshController.refreshAll(
-//            [Api.Grades, Api.Homework, Api.Timetable, Api.BehaveEvents]);
-      } else {
-        print("result.exception = ${loginR.exception}\n");
-        NoSuchMethodError error = loginR.exception as NoSuchMethodError;
-        print("error: ${error.stackTrace}");
-        print("${loginR.exception.runtimeType}\n");
-        print("status code: ${loginR.statusCode}");
-      }
-      onComplete(loginR.isSuccess);
-    });
+    db
+      ..username = username
+      ..password = password;
+    _refreshController.login().then((isSuccess) => onComplete(isSuccess));
   }
 
   tryLoginFromDB(void onComplete(bool success)) {
@@ -140,7 +115,9 @@ class MasterBloc extends Callback {
 
   Observable<E> _getData<E>(Api api, {Map data}) {
     ApiPublishSubject<E> subject = _publishSubjects
-        .firstWhere((p) => p.api == api && p.data == data, orElse: () => null);
+        .firstWhere((p) =>
+    p.api == api && p.data == data && p.data["overview"] == data["overview"],
+        orElse: () => null);
     if (subject != null) {
       print("subject was not null\n");
       Future.delayed(_100ms, () => subject.flush());
@@ -155,7 +132,8 @@ class MasterBloc extends Callback {
 
   filterData(Api api, List Function(List items) filter, {Map data}) {
     ApiPublishSubject<List> subject = _publishSubjects
-        .firstWhere((subject) => subject.api == api && subject.data == data);
+        .firstWhere((subject) => subject.api == api && subject.data == data,
+        orElse: () => null);
     if (subject == null) {
       print(
           "Error: subject with api $api and data $data was not found. Filter was not set.");
@@ -204,12 +182,25 @@ class MasterBloc extends Callback {
 
   void closeDrawerAndNavigate(BuildContext context, String route) {
     Navigator.pop(context);
-    Navigator.pushNamed(context, route);
+    if (!ModalRoute
+        .of(context)
+        .settings
+        .name
+        .contains(route)) {
+      Navigator.pushNamed(context, route);
+    }
   }
 
   @override
   onSuccess(Api api) {
     _publishSubjects.where((ps) => ps.api == api).forEach((ps) => ps.update());
+  }
+
+
+  @override
+  onLogin() {
+    print("\n\n\ndo you even flex bro\n\n\n");
+    _refreshController.refreshAll([Api.Homework]);
   }
 
   //If picture is set, return it. Otherwise, return future builder

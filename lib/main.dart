@@ -19,6 +19,7 @@ void main() =>
           //{Key key, this.title, this.builder, this.api, this.additionalData}
           '/grades': (context) =>
               DataListPage(
+                  additionalData: {"overview": false},
                   title: "ציונים",
                   api: Api.Grades,
                   builder: (BuildContext context, dynamic g) {
