@@ -174,6 +174,11 @@ class MasterBloc extends Callback {
                   closeDrawerAndNavigate(context, "/grades");
                 }),
             ListTile(
+                title: const Text("אירועי התנהגות"),
+                onTap: () {
+                  closeDrawerAndNavigate(context, "/behave");
+                }),
+            ListTile(
                 title: const Text("התנתק/י"),
                 onTap: () {
                   bloc.logout(context);
@@ -182,13 +187,14 @@ class MasterBloc extends Callback {
 
   void closeDrawerAndNavigate(BuildContext context, String route) {
     Navigator.pop(context);
-    if (!ModalRoute
-        .of(context)
-        .settings
-        .name
-        .contains(route)) {
-      Navigator.pushNamed(context, route);
-    }
+//    if (!ModalRoute
+//        .of(context)
+//        .settings
+//        .name
+//        .contains(route)) {
+//    }
+    Navigator.pushNamed(context, route);
+
   }
 
   @override
@@ -199,8 +205,7 @@ class MasterBloc extends Callback {
 
   @override
   onLogin() {
-    print("\n\n\ndo you even flex bro\n\n\n");
-    _refreshController.refreshAll([Api.Homework]);
+    _refreshController.refreshAll([Api.Homework, Api.BehaveEvents]);
   }
 
   //If picture is set, return it. Otherwise, return future builder
