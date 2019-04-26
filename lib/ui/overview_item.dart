@@ -6,18 +6,22 @@ import 'package:unofficial_mashov/contollers/bloc.dart';
 class OverviewItem extends StatelessWidget {
   final String title;
   final Stream<num> stream;
+  final num data;
   final int precision;
   final TextStyle headerStyle, valueStyle;
   final bool isZeroGood;
 
   OverviewItem({@required this.title,
-    @required this.stream,
+    this.stream,
+    this.data: -1,
     this.precision: 1,
     this.headerStyle: const TextStyle(color: Colors.white, fontSize: 20.0),
     this.valueStyle: const TextStyle(color: Colors.white, fontSize: 32.0),
     this.isZeroGood: false}) {
-    if (!bloc.cache.containsKey(title)) {
-      bloc.cache[title] = -1;
+    assert(stream != null || this.data !=
+        null, "Error: overview item must recieve either data or stream.");
+    if (!bloc.cache.containsKey(title) && data == -1) {
+      bloc.cache[title] = data;
     }
   }
 
@@ -25,7 +29,7 @@ class OverviewItem extends StatelessWidget {
   Widget build(BuildContext context) =>
       Column(
         children: <Widget>[
-          bloc.cache[title] == -1 ?
+          data != -1 ? _build(data == null ? bloc.cache[title] : data) :
           StreamBuilder<num>(
               stream: stream,
               builder: (context, snap) {
@@ -37,8 +41,7 @@ class OverviewItem extends StatelessWidget {
                   return _build(snap.data);
                 }
                 return const Text("");
-              }) : _build(bloc.cache[title])
-
+              })
           ,
           Text(title, style: headerStyle)
         ],
@@ -49,6 +52,5 @@ class OverviewItem extends StatelessWidget {
           "${data.toDouble() == data.roundToDouble() ? data.toInt() : data
               .toStringAsFixed(precision)}",
           style: valueStyle);
-
 
 }

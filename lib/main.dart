@@ -16,7 +16,6 @@ void main() {
           '/schools': (context) => ChooseSchoolRoute(),
           '/login': (context) => LoginRoute(),
           '/home': (context) => HomeRoute(),
-          //{Key key, this.title, this.builder, this.api, this.additionalData}
           '/grades': (context) =>
               DataListPage(
                   additionalData: {"overview": false},
@@ -56,11 +55,20 @@ void main() {
                         }),
                     MenuFilter(label: "לפי מקצוע",
                         icon: Icons.school,
-                        filter: (items) {
+                        futureFilter: (items) {
                           List<Grade> grades = items.cast<Grade>();
-                          grades.sort((g1, g2) =>
-                              g1.subject.compareTo(g2.subject));
-                          return grades;
+                          //to set in order to remove duplicates
+                          return bloc.displayDialog(
+                              grades.map((g) => g.subject).toSet().toList(),
+                              "מקצוע", context).then((subject) {
+                            if (subject != null && subject.isNotEmpty)
+                              grades = grades.where((g) => g.subject == subject)
+                                  .toList();
+                            //after filtering, sort by chronological order
+                            grades.sort((g1, g2) =>
+                                g2.eventDate.compareTo(g1.eventDate));
+                            return grades;
+                          });
                         }),
                     MenuFilter(label: "אחרונים",
                         icon: Icons.date_range,
@@ -137,18 +145,37 @@ void main() {
                 filters: [
                   MenuFilter(label: "לפי סוג אירוע",
                       icon: Icons.event_available,
-                      filter: (items) {
-                        List<BehaveEvent> data = items.cast<BehaveEvent>();
-                        data.sort((e1, e2) => e1.text.compareTo(e2.text));
-                        return data;
+                      futureFilter: (items) {
+                        List<BehaveEvent> events = items.cast();
+                        //to set in order to remove duplicates
+                        return bloc.displayDialog(
+                            events.map((e) => e.text).toSet().toList(),
+                            "סוג אירוע", context).then((type) {
+                          if (type != null && type.isNotEmpty)
+                            events =
+                                events.where((e) => e.text == type).toList();
+                          //after filtering, sort by chronological order
+                          events.sort((e1, e2) =>
+                              e2.date.compareTo(e1.date));
+                          return events;
+                        });
                       }),
                   MenuFilter(label: "לפי מקצוע",
                       icon: Icons.school,
-                      filter: (items) {
-                        List<BehaveEvent> data = items.cast<BehaveEvent>();
-                        data.sort((e1, e2) =>
-                            e1.subject.compareTo(e2.subject));
-                        return data;
+                      futureFilter: (items) {
+                        List<BehaveEvent> events = items.cast();
+                        //to set in order to remove duplicates
+                        return bloc.displayDialog(
+                            events.map((e) => e.subject).toSet().toList(),
+                            "מקצוע", context).then((subject) {
+                          if (subject != null && subject.isNotEmpty)
+                            events = events.where((e) => e.subject == subject)
+                                .toList();
+                          //after filtering, sort by chronological order
+                          events.sort((e1, e2) =>
+                              e2.date.compareTo(e1.date));
+                          return events;
+                        });
                       }),
                   MenuFilter(label: "אחרונים",
                       icon: Icons.date_range,

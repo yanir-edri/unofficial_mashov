@@ -10,6 +10,7 @@ import 'package:unofficial_mashov/api_ps.dart';
 import 'package:unofficial_mashov/contollers/database_controller.dart';
 import 'package:unofficial_mashov/contollers/files_controller.dart';
 import 'package:unofficial_mashov/contollers/refresh_controller.dart';
+import 'package:unofficial_mashov/inject.dart';
 
 class MasterBloc extends Callback {
   ApiController _apiController = MashovApi.getController();
@@ -114,9 +115,11 @@ class MasterBloc extends Callback {
   }
 
   Observable<E> _getData<E>(Api api, {Map data}) {
-    ApiPublishSubject<E> subject = _publishSubjects
-        .firstWhere((p) =>
-    p.api == api && p.data == data && p.data["overview"] == data["overview"],
+    ApiPublishSubject<E> subject = _publishSubjects.firstWhere(
+            (p) =>
+        p.api == api &&
+            p.data == data &&
+            p.data["overview"] == data["overview"],
         orElse: () => null);
     if (subject != null) {
       print("subject was not null\n");
@@ -131,8 +134,8 @@ class MasterBloc extends Callback {
   }
 
   filterData(Api api, List Function(List items) filter, {Map data}) {
-    ApiPublishSubject<List> subject = _publishSubjects
-        .firstWhere((subject) => subject.api == api && subject.data == data,
+    ApiPublishSubject<List> subject = _publishSubjects.firstWhere(
+            (subject) => subject.api == api && subject.data == data,
         orElse: () => null);
     if (subject == null) {
       print(
@@ -194,14 +197,12 @@ class MasterBloc extends Callback {
 //        .contains(route)) {
 //    }
     Navigator.pushNamed(context, route);
-
   }
 
   @override
   onSuccess(Api api) {
     _publishSubjects.where((ps) => ps.api == api).forEach((ps) => ps.update());
   }
-
 
   @override
   onLogin() {
@@ -228,6 +229,29 @@ class MasterBloc extends Callback {
                   shape: BoxShape.circle,
                   image: DecorationImage(
                       fit: BoxFit.fill, image: FileImage(picture)))));
+
+  SimpleDialog createDialog<E>(List<E> data, String itemTitle,
+      BuildContext context, {TextAlign align}) {
+    return SimpleDialog(
+
+      title: Inject.rtl(Text("בחר $itemTitle:", textAlign: TextAlign.center)),
+      children: data
+          .map((option) =>
+          SimpleDialogOption(
+              child: Text("$option",
+                  textAlign: align, style: TextStyle(fontSize: 16)),
+              onPressed: () {
+                Navigator.pop(context, option);
+              }))
+          .toList(),
+    );
+  }
+
+  Future<E> displayDialog<E>(List<E> data, String title, BuildContext context,
+      { TextAlign align: TextAlign.right }) =>
+      showDialog<E>(context: context,
+          builder: (c) => createDialog(data, title, c, align: align))
+          .catchError((error) => null);
 }
 
 MasterBloc bloc = MasterBloc();

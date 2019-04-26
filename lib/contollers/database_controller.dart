@@ -435,7 +435,7 @@ class DatabaseController extends Callback {
             if (grades.isEmpty) {
               return 0;
             } else {
-              Iterable<int> gradesNum = grades /*.where((g) => g.grade != 0)*/
+              Iterable<int> gradesNum = grades.where((g) => g.grade != 0)
                   .map((g) => g.grade);
               int len = gradesNum.length;
               return gradesNum.reduce((n1, n2) => n1 + n2) / len;
