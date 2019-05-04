@@ -148,7 +148,6 @@ class _DataListPageState<E> extends State<DataListPage<E>> {
 
   Widget buildOverview<E>(Stream<List<E>> data, Api api, List<E> initialData) {
     print("Stream builder builded");
-    return Text("this is just a test");
     return StreamBuilder<List<E>>(
         stream: data, initialData: initialData, builder: (context, snap) {
       if (!snap.hasData || snap.data == null) return Text("");

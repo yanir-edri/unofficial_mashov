@@ -48,7 +48,6 @@ class DataListState<E> extends State<DataList>
               //if it's timetable, we will want to take the whole day.
               _data = _data.take(min(_data.length, 4)).toList();
             }
-//            _data
             return ListView.builder(
                 physics: widget.isDemo && !(_data[0] is Lesson)
                     ? NeverScrollableScrollPhysics()
@@ -103,6 +102,13 @@ class DataListState<E> extends State<DataList>
     if (today != 7) {
       timetable.sort((lesson1, lesson2) =>
           lesson1.hour.compareTo(lesson2.hour));
+      for (int i = 0; i < timetable.length - 1; i++) {
+        if (timetable[i].hour == timetable[i + 1].hour) {
+          timetable[i].teachers.addAll(["|||", ...(timetable[i+1].teachers)]);
+    timetable[i].subject += "|||${timetable[i+1].subject}";
+    timetable.removeAt(i+1);
+    }
+    }
     }
     return timetable as List<E>;
   }

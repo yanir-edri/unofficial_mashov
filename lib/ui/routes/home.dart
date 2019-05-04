@@ -28,10 +28,40 @@ class HomeRouteState extends State<HomeRoute> {
         isDemo: true,
         builder: (BuildContext context, dynamic l) {
           Lesson lesson = l;
+          Widget Function(String subject, List<String> teachers) builder = (
+              String subject, List<String> teachers) =>
+              ListTile(title: Text(subject),
+                  subtitle: Text(teachers.join(", ")),
+                  contentPadding: EdgeInsets.only(left: 4.0, right: 4.0));
+          //if there is only one lesson, it should be right next to the hour.
+          //otherwise, we want a spacer and a divider
+          List<Widget> content = List();
+          if (!lesson.subject.contains("|||")) {
+            content.add(builder(lesson.subject, lesson.teachers));
+          } else {
+            List<String> subjects = lesson.subject.split("|||");
+            print("hour ${lesson.hour}: ${subjects.length} lessons");
+            int teachersIndex = 0;
+            for (int i = 0; i < subjects.length; i++) {
+              List<String> teachers = List();
+              while (teachersIndex < lesson.teachers.length &&
+                  lesson.teachers[teachersIndex] != "|||") {
+                teachers.add(lesson.teachers[teachersIndex++]);
+              }
+              teachersIndex++;
+              //add one to skip ||| for the next one
+              content.add(builder(subjects[i], teachers));
+            }
+          }
           return ListTile(
-            title: Text(lesson.hour.toString() + ": " + lesson.subject),
-            subtitle: Text(lesson.teachers.join(", ")),
-            /*isThreeLine: false*/
+            leading: CircleAvatar(child: Text("${lesson.hour}", style: Theme
+                .of(context)
+                .textTheme
+                .body1
+                .copyWith(fontSize: 18)), backgroundColor: Colors.transparent,),
+            title: Column(children: content),
+            contentPadding: EdgeInsets.symmetric(horizontal: 8.0),
+            dense: true,
           );
         },
         api: Api.Timetable);
