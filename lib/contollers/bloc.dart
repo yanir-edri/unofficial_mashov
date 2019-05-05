@@ -182,11 +182,17 @@ class MasterBloc extends Callback {
                   closeDrawerAndNavigate(context, "/behave");
                 }),
             ListTile(
+                title: const Text("מערכת שעות"),
+                onTap: () {
+                  closeDrawerAndNavigate(context, "/timetable");
+                }),
+            ListTile(
                 title: const Text("התנתק/י"),
                 onTap: () {
                   bloc.logout(context);
                 })
-      ]));
+
+          ]));
 
   void closeDrawerAndNavigate(BuildContext context, String route) {
     Navigator.pop(context);

@@ -33,8 +33,8 @@ class OverviewItem extends StatelessWidget {
           StreamBuilder<num>(
               stream: stream,
               builder: (context, snap) {
-                print("overview($title): recieved data ${snap
-                    .data}, cache is ${bloc.cache[title]}");
+//                print("overview($title): recieved data ${snap
+//                    .data}, cache is ${bloc.cache[title]}");
                 if (snap.hasData &&
                     (isZeroGood || snap.data != null && snap.data != 0)) {
                   bloc.cache[title] = snap.data;

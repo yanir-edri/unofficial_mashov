@@ -198,14 +198,14 @@ class RefreshController {
   }
 
   attach(Callback callback) {
-    print("attaching callback");
+//    print("attaching callback");
     detach(callback);
     _callbacks.add(callback);
   }
 
   detach(Callback callback) {
     if (_callbacks.contains(callback)) {
-      print("detaching callback");
+//      print("detaching callback");
       _callbacks.remove(callback);
     }
   }

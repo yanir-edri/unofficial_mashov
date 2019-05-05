@@ -6,6 +6,7 @@ import 'package:unofficial_mashov/ui/data_list_page.dart';
 import 'package:unofficial_mashov/ui/routes/home.dart';
 import 'package:unofficial_mashov/ui/routes/login/login.dart';
 import 'package:unofficial_mashov/ui/routes/login/school.dart';
+import 'package:unofficial_mashov/ui/routes/time_table.dart';
 
 void main() {
   runApp(MaterialApp(
@@ -207,7 +208,8 @@ void main() {
                       }
                   )
                 ]);
-          }
+          },
+          '/timetable': (BuildContext context) => TimeTable()
         }));
 }
 
@@ -234,6 +236,13 @@ class _MyAppState extends State<MyApp> {
           FlatButton(
             onPressed: () => Navigator.pop(context),
             child: Text("אוקיי"),
+          ),
+          FlatButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/');
+            },
+            child: Text("נסה שוב"),
           )
         ]);
   }

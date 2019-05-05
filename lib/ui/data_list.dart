@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:mashov_api/mashov_api.dart';
 import 'package:unofficial_mashov/contollers/bloc.dart';
+
+import '../inject.dart';
 typedef Builder = Widget Function(BuildContext context, dynamic item);
 class DataList<E> extends StatefulWidget {
   final Builder builder;
@@ -43,7 +45,7 @@ class DataListState<E> extends State<DataList>
             _data = snap.data;
 
             if (_data.isNotEmpty && _data[0] is Lesson) {
-              _data = timetableDayProcess(_data, widget.isDemo);
+              _data = Inject.timetableDayProcess(_data, widget.isDemo);
             } else if (widget.isDemo) {
               //if it's timetable, we will want to take the whole day.
               _data = _data.take(min(_data.length, 4)).toList();
@@ -66,59 +68,6 @@ class DataListState<E> extends State<DataList>
           );
         },
       );
-
-
-  @override
-  void dispose() {
-    super.dispose();
-//    widget._processedStream.close();
-  }
-
-
-  List<E> timetableDayProcess(List<E> data, bool isDemo) {
-    //the days of the mashov go from 1 to 7, not from 0 to 6.
-    List<Lesson> timetable = data.cast<Lesson>();
-    if (isDemo) {
-      if (today == 7) {
-        //get some sleep on saturday!
-        timetable = [];
-        for (int i = 0; i < 6; i++) {
-          timetable.add(Lesson(groupId: 0,
-              day: 7,
-              subject: "לישון",
-              hour: i + 1,
-              teachers: [],
-              room: ""));
-        }
-      } else {
-        //just a normal day
-        //setting temp variable just to avoid calculation of today a lot of times
-        int day = today;
-        timetable.retainWhere((lesson) {
-          return lesson.day == day;
-        });
-      }
-    }
-    if (today != 7) {
-      timetable.sort((lesson1, lesson2) =>
-          lesson1.hour.compareTo(lesson2.hour));
-      for (int i = 0; i < timetable.length - 1; i++) {
-        if (timetable[i].hour == timetable[i + 1].hour) {
-          timetable[i].teachers.addAll(["|||", ...(timetable[i+1].teachers)]);
-    timetable[i].subject += "|||${timetable[i+1].subject}";
-    timetable.removeAt(i+1);
-    }
-    }
-    }
-    return timetable as List<E>;
-  }
-
-  int get today {
-    int day = DateTime
-        .now()
-        .weekday;
-    return day == 7 ? 1 : day + 1;
-  }
 
   //If the data list is a demo, we do not want to rebuild it every time we scroll
   @override
