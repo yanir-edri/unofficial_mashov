@@ -18,8 +18,8 @@ class OverviewItem extends StatelessWidget {
     this.headerStyle: const TextStyle(color: Colors.white, fontSize: 20.0),
     this.valueStyle: const TextStyle(color: Colors.white, fontSize: 32.0),
     this.isZeroGood: false}) {
-    assert(stream != null || this.data !=
-        null, "Error: overview item must recieve either data or stream.");
+    assert(stream != null || this.data != null,
+    "Error: overview item must recieve either data or stream.");
     if (!bloc.cache.containsKey(title) && data == -1) {
       bloc.cache[title] = data;
     }
@@ -29,8 +29,9 @@ class OverviewItem extends StatelessWidget {
   Widget build(BuildContext context) =>
       Column(
         children: <Widget>[
-          data != -1 ? _build(data == null ? bloc.cache[title] : data) :
-          StreamBuilder<num>(
+          data != -1
+              ? _build(data == null ? bloc.cache[title] : data)
+              : StreamBuilder<num>(
               stream: stream,
               builder: (context, snap) {
 //                print("overview($title): recieved data ${snap
@@ -41,8 +42,7 @@ class OverviewItem extends StatelessWidget {
                   return _build(snap.data);
                 }
                 return const Text("");
-              })
-          ,
+              }),
           Text(title, style: headerStyle)
         ],
       );
@@ -52,5 +52,4 @@ class OverviewItem extends StatelessWidget {
           "${data.toDouble() == data.roundToDouble() ? data.toInt() : data
               .toStringAsFixed(precision)}",
           style: valueStyle);
-
 }

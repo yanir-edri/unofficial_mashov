@@ -6,7 +6,9 @@ import 'package:mashov_api/mashov_api.dart';
 import 'package:unofficial_mashov/contollers/bloc.dart';
 
 import '../inject.dart';
+
 typedef Builder = Widget Function(BuildContext context, dynamic item);
+
 class DataList<E> extends StatefulWidget {
   final Builder builder;
   final Api api;
@@ -26,7 +28,6 @@ class DataList<E> extends StatefulWidget {
   DataListState<E> createState() {
     return new DataListState<E>();
   }
-
 }
 
 class DataListState<E> extends State<DataList>
@@ -38,8 +39,9 @@ class DataListState<E> extends State<DataList>
       StreamBuilder<List>(
         initialData: List(),
         //stream won't be null in data list page
-        stream: widget.stream != null ? widget.stream : bloc.getApiData(
-            widget.api, data: widget.additionalData),
+        stream: widget.stream != null
+            ? widget.stream
+            : bloc.getApiData(widget.api, data: widget.additionalData),
         builder: (context, snap) {
           if (snap.hasData && snap.data.length > 0) {
             _data = snap.data;

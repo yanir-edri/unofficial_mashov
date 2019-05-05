@@ -12,16 +12,19 @@ import 'package:unofficial_mashov/ui/overview_item.dart';
 typedef Builder = Widget Function(BuildContext context, dynamic item);
 typedef Filter = List Function(List data);
 typedef FutureFilter = Future<List> Function(List data);
+
 class MenuFilter {
   final Filter filter;
   final FutureFilter futureFilter;
   final IconData icon;
   final String label;
 
-  MenuFilter(
-      {this.filter, this.futureFilter, @required this.icon, @required this.label}) {
-    assert(this.filter != null || this.futureFilter !=
-        null, "Menu Filter error: either filter or future filter mustn't be null.");
+  MenuFilter({this.filter,
+    this.futureFilter,
+    @required this.icon,
+    @required this.label}) {
+    assert(this.filter != null || this.futureFilter != null,
+    "Menu Filter error: either filter or future filter mustn't be null.");
   }
 }
 
@@ -44,16 +47,13 @@ class DataListPage<E> extends StatefulWidget {
   _DataListPageState<E> createState() {
     return _DataListPageState();
   }
-
 }
 
 class _DataListPageState<E> extends State<DataListPage<E>> {
-
   PublishSubject<List<E>> _contentSubject;
   List<E> _cache;
   List<E> _filteredCache;
   FutureFilter _filter = (items) => Future.value(items);
-
 
   @override
   Widget build(BuildContext context) {
@@ -76,19 +76,17 @@ class _DataListPageState<E> extends State<DataListPage<E>> {
                     and yet stream builder is.. not small
                     */
                     child: buildOverview(
-                        _contentSubject.stream, widget.api, _filteredCache)
-                ),
+                        _contentSubject.stream, widget.api, _filteredCache)),
               ),
             )
           ];
         },
-        body: DataList(api: widget.api,
+        body: DataList(
+            api: widget.api,
             builder: widget.builder,
             isDemo: false,
             additionalData: widget.additionalData,
-            stream: _contentSubject.stream)
-    );
-
+            stream: _contentSubject.stream));
 
     return Inject.rtl(Scaffold(
         drawer: bloc.getDrawer(context),
@@ -98,9 +96,10 @@ class _DataListPageState<E> extends State<DataListPage<E>> {
           mainIcon: Icons.filter_list,
           maskColor: Colors.transparent,
           menus: widget.filters
-              .map((menuFilter) => MenuData(menuFilter.icon,
-                  (context, data) => _handleFab(context, data.labelText),
-              labelText: menuFilter.label))
+              .map((menuFilter) =>
+              MenuData(menuFilter.icon,
+                      (context, data) => _handleFab(context, data.labelText),
+                  labelText: menuFilter.label))
               .toList(),
         )
             : null));
@@ -149,43 +148,42 @@ class _DataListPageState<E> extends State<DataListPage<E>> {
   Widget buildOverview<E>(Stream<List<E>> data, Api api, List<E> initialData) {
     print("Stream builder builded");
     return StreamBuilder<List<E>>(
-        stream: data, initialData: initialData, builder: (context, snap) {
-      if (!snap.hasData || snap.data == null) return Text("");
-      switch (api) {
-        case Api.Grades:
-          List<Grade> grades = snap.data.cast();
-          Iterable<int> gradesNum = grades.where((g) => g.grade != 0)
-              .map((g) => g.grade);
-          int len = gradesNum.length;
-          double average = gradesNum.reduce((n1, n2) => n1 + n2) / len;
-          return Row(children: <Widget>[
-            Spacer(),
-            OverviewItem(title: "כמות מבחנים", data: snap.data.length),
-            Spacer(),
-            OverviewItem(title: "ממוצע", data: average, precision: 1),
-            Spacer()
-          ]);
-        case Api.BehaveEvents:
-          List<BehaveEvent> events = snap.data.cast();
-          int justified = events
-              .where((e) => e.justificationId > 0)
-              .length;
-          return Row(children: <Widget>[
-            Spacer(),
-            OverviewItem(title: "מוצדקים", data: justified),
-            Spacer(),
-            OverviewItem(title: "לא מוצדקים", data: events.length - justified),
-            Spacer()
-          ]);
+        stream: data,
+        initialData: initialData,
+        builder: (context, snap) {
+          if (!snap.hasData || snap.data == null) return Text("");
+          switch (api) {
+            case Api.Grades:
+              List<Grade> grades = snap.data.cast();
+              Iterable<int> gradesNum =
+              grades.where((g) => g.grade != 0).map((g) => g.grade);
+              int len = gradesNum.length;
+              double average = gradesNum.reduce((n1, n2) => n1 + n2) / len;
+              return Row(children: <Widget>[
+                Spacer(),
+                OverviewItem(title: "כמות מבחנים", data: snap.data.length),
+                Spacer(),
+                OverviewItem(title: "ממוצע", data: average, precision: 1),
+                Spacer()
+              ]);
+            case Api.BehaveEvents:
+              List<BehaveEvent> events = snap.data.cast();
+              int justified = events
+                  .where((e) => e.justificationId > 0)
+                  .length;
+              return Row(children: <Widget>[
+                Spacer(),
+                OverviewItem(title: "מוצדקים", data: justified),
+                Spacer(),
+                OverviewItem(
+                    title: "לא מוצדקים", data: events.length - justified),
+                Spacer()
+              ]);
 
-        default:
-          print("no overviews set for api $api, breaking");
-          return Text("no overview set");
-      }
-    });
+            default:
+              print("no overviews set for api $api, breaking");
+              return Text("no overview set");
+          }
+        });
   }
-
-
 }
-
-

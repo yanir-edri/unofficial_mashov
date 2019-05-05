@@ -191,7 +191,6 @@ class MasterBloc extends Callback {
                 onTap: () {
                   bloc.logout(context);
                 })
-
           ]));
 
   void closeDrawerAndNavigate(BuildContext context, String route) {
@@ -237,9 +236,9 @@ class MasterBloc extends Callback {
                       fit: BoxFit.fill, image: FileImage(picture)))));
 
   SimpleDialog createDialog<E>(List<E> data, String itemTitle,
-      BuildContext context, {TextAlign align}) {
+      BuildContext context,
+      {TextAlign align}) {
     return SimpleDialog(
-
       title: Inject.rtl(Text("בחר $itemTitle:", textAlign: TextAlign.center)),
       children: data
           .map((option) =>
@@ -254,8 +253,9 @@ class MasterBloc extends Callback {
   }
 
   Future<E> displayDialog<E>(List<E> data, String title, BuildContext context,
-      { TextAlign align: TextAlign.right }) =>
-      showDialog<E>(context: context,
+      {TextAlign align: TextAlign.right}) =>
+      showDialog<E>(
+          context: context,
           builder: (c) => createDialog(data, title, c, align: align))
           .catchError((error) => null);
 }

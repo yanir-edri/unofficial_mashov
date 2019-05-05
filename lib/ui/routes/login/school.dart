@@ -5,7 +5,6 @@ import 'package:unofficial_mashov/contollers/bloc.dart';
 import 'package:unofficial_mashov/inject.dart';
 
 class ChooseSchoolRoute extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
     print("building schools route, schools size is ${bloc.schools.length}");
@@ -46,7 +45,6 @@ class ChooseSchoolRoute extends StatelessWidget {
       },
     );
   }
-
 
   SimpleDialog getYearsDialog(BuildContext context, School school) =>
       SimpleDialog(

@@ -10,7 +10,6 @@ import 'package:unofficial_mashov/contollers/refresh_controller.dart';
 class DatabaseController extends Callback {
   SharedPreferences _prefs;
 
-
   static File _conversationsFile;
   static File _behaveEventsFile;
   static File _contactsFile;
@@ -21,7 +20,6 @@ class DatabaseController extends Callback {
   static File _maakavFile;
   static File _hatamotFile;
   static File _homeworkFile;
-
 
   String get password => _prefs.getString("password") ?? "";
 
@@ -104,7 +102,6 @@ class DatabaseController extends Callback {
 
   set classNum(String value) => _prefs.setString("classNum", value);
 
-
   String _countToJson(MessagesCount value) => """{
     "allMessages": ${value.allMessages},
     "inboxMessages": ${value.inboxMessages},
@@ -114,8 +111,6 @@ class DatabaseController extends Callback {
 
   set messagesCount(MessagesCount value) =>
       _prefs.setString("messagesCount", _countToJson(value));
-
-
 
   Future<List<BehaveEvent>> get behaveEvents =>
       _getListFromFile(_behaveEventsFile, BehaveEvent.fromJson).then((l) {
@@ -221,7 +216,6 @@ class DatabaseController extends Callback {
             : null));
   }
 
-
   ///Returns true if successful, false otherwise.
   Future<bool> init() {
     List<Future> futures = [
@@ -256,7 +250,6 @@ class DatabaseController extends Callback {
     });
   }
 
-
   DatabaseController(SharedPreferences prefs) {
     ///it's easier to get it injected rather than messing it up trying to await it's future.
     _prefs = prefs;
@@ -265,8 +258,6 @@ class DatabaseController extends Callback {
   }
 
   ///prefs:
-
-
 
   /// some nice utility functions
 
@@ -307,26 +298,26 @@ class DatabaseController extends Callback {
         if (grades.isEmpty) {
           return 0;
         } else {
-          Iterable<int> gradesNum = grades.where((g) => g.grade != 0).map((
-              g) => g.grade);
+          Iterable<int> gradesNum =
+          grades.where((g) => g.grade != 0).map((g) => g.grade);
           int len = gradesNum.length;
           return gradesNum.reduce((n1, n2) => n1 + n2) / len;
         }
       });
-
 
   Future<int> todayLessonsCount() {
     int today = DateTime
         .now()
         .weekday;
     today = today == 7 ? 1 : today + 1;
-    return timetable.then(
-            (lessons) =>
-        lessons.isEmpty ? 0 :
-        lessons
-            .where((lesson) => lesson.day == today)
-            .length);
+    return timetable.then((lessons) =>
+    lessons.isEmpty
+        ? 0
+        : lessons
+        .where((lesson) => lesson.day == today)
+        .length);
   }
+
   Future<bool> hasEnoughData() =>
       Future.wait([
         File(profilePicturePath).exists(),
@@ -435,8 +426,8 @@ class DatabaseController extends Callback {
             if (grades.isEmpty) {
               return 0;
             } else {
-              Iterable<int> gradesNum = grades.where((g) => g.grade != 0)
-                  .map((g) => g.grade);
+              Iterable<int> gradesNum =
+              grades.where((g) => g.grade != 0).map((g) => g.grade);
               int len = gradesNum.length;
               return gradesNum.reduce((n1, n2) => n1 + n2) / len;
             }
@@ -449,12 +440,12 @@ class DatabaseController extends Callback {
               .now()
               .weekday;
           today = today == 7 ? 1 : today + 1;
-          return timetable.then(
-                  (lessons) =>
-              lessons.isEmpty ? 0 :
-              lessons
-                  .where((lesson) => lesson.day == today)
-                  .length);
+          return timetable.then((lessons) =>
+          lessons.isEmpty
+              ? 0
+              : lessons
+              .where((lesson) => lesson.day == today)
+              .length);
 //        case Api.Alfon:
 //          if (data != null) if (data.containsKey("groupId"))
 //            return getContacts(groupId: data["groupId"]);
@@ -477,15 +468,17 @@ class DatabaseController extends Callback {
         case Api.BehaveEvents:
         //justified/un-justified
           if (data.containsKey("justified")) {
-            return behaveEvents.then((events) =>
-            events
-                .where((e) => e.justificationId != 0)
-                .length);
+            return behaveEvents.then(
+                    (events) =>
+                events
+                    .where((e) => e.justificationId != 0)
+                    .length);
           } else {
-            return behaveEvents.then((events) =>
-            events
-                .where((e) => e.justificationId == 0)
-                .length);
+            return behaveEvents.then(
+                    (events) =>
+                events
+                    .where((e) => e.justificationId == 0)
+                    .length);
           }
           break;
 //        case Api.Messages:
@@ -496,8 +489,7 @@ class DatabaseController extends Callback {
 //          return hatamot;
 //          break;
         default:
-          print(
-              "error: trying to get overview of api $api. returning -1");
+          print("error: trying to get overview of api $api. returning -1");
           return Future.value(-1);
       }
     } else {

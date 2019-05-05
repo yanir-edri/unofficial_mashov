@@ -17,16 +17,20 @@ class FilesController {
       _root = directory;
       _messagesDir = Directory("${_root.path}/messages");
       return _messagesDir.exists();
-    }).then((isExist) {
+    })
+        .then((isExist) {
       if (!isExist) return _messagesDir.create();
       return Future.value(_messagesDir);
-    }).then((d) {
+    })
+        .then((d) {
       _contactsDir = Directory("${_root.path}/contacts");
       return _contactsDir.exists();
-    }).then((isExist) {
+    })
+        .then((isExist) {
       if (!isExist) _contactsDir.create();
       return Future.value(_contactsDir);
-    }).then((d) {
+    })
+        .then((d) {
       print("storage is done initializing");
     })
         .then((n) => true)

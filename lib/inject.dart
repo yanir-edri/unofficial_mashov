@@ -44,7 +44,6 @@ class Inject {
           .reversed
           .join("/");
 
-
   static const double margin = 24.0;
 
   static Builder timetableBuilder() =>
@@ -100,7 +99,8 @@ class Inject {
         //get some sleep on saturday!
         timetable = [];
         for (int i = 0; i < 6; i++) {
-          timetable.add(Lesson(groupId: 0,
+          timetable.add(Lesson(
+              groupId: 0,
               day: 7,
               subject: "לישון",
               hour: i + 1,
@@ -117,8 +117,8 @@ class Inject {
       }
     }
     if (today != 7) {
-      timetable.sort((lesson1, lesson2) =>
-          lesson1.hour.compareTo(lesson2.hour));
+      timetable
+          .sort((lesson1, lesson2) => lesson1.hour.compareTo(lesson2.hour));
       for (int i = 0; i < timetable.length - 1; i++) {
         if (timetable[i].hour == timetable[i + 1].hour) {
           timetable[i].teachers.addAll(["|||", ...(timetable[i + 1].teachers)]);

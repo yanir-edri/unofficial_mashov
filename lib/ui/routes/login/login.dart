@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:unofficial_mashov/contollers/bloc.dart';
 import 'package:unofficial_mashov/inject.dart';
 
-
 class LoginRoute extends StatefulWidget {
-
   @override
   LoginRouteState createState() {
     return LoginRouteState();
@@ -12,7 +10,6 @@ class LoginRoute extends StatefulWidget {
 }
 
 class LoginRouteState extends State<LoginRoute> {
-
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -78,8 +75,10 @@ class LoginRouteState extends State<LoginRoute> {
                             // username is _usernameController.text
                             //password is _passwordController.text
                             //year is $year
-                            bloc.tryLogin(_usernameController.text,
-                                _passwordController.text, (isSuccessful) {
+                            bloc.tryLogin(
+                                _usernameController.text,
+                                _passwordController.text,
+                                    (isSuccessful) {
                                   if (isSuccessful) {
                                     Navigator.pushReplacementNamed(
                                         context, '/home');
@@ -99,16 +98,17 @@ class LoginRouteState extends State<LoginRoute> {
 
   showFailedDialog() {
     showDialog(
-        context: context, builder: (context) {
-      return SimpleDialog(
-        title: Inject.rtl(Text("ההתחברות נכשלה")),
-        children: <Widget>[
-          SimpleDialogOption(
-            child: Text("אוקיי"),
-            onPressed: () => Navigator.pop(context),
-          )
-        ],
-      );
-    });
+        context: context,
+        builder: (context) {
+          return SimpleDialog(
+            title: Inject.rtl(Text("ההתחברות נכשלה")),
+            children: <Widget>[
+              SimpleDialogOption(
+                child: Text("אוקיי"),
+                onPressed: () => Navigator.pop(context),
+              )
+            ],
+          );
+        });
   }
 }

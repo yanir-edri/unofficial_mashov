@@ -25,9 +25,7 @@ class HomeRouteState extends State<HomeRoute> {
 
   setup() {
     todayList = DataList<Lesson>(
-        isDemo: true,
-        builder: Inject.timetableBuilder(),
-        api: Api.Timetable);
+        isDemo: true, builder: Inject.timetableBuilder(), api: Api.Timetable);
 
     homeworkList = DataList<Homework>(
         isDemo: true,
@@ -161,7 +159,7 @@ class HomeRouteState extends State<HomeRoute> {
                     .of(context)
                     .accentColor)),
             onPressed: () {
-              workingOnIt(key);
+              Navigator.pushNamed(context, '/timetable');
             },
           )
         ],
