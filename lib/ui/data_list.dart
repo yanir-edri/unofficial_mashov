@@ -35,8 +35,9 @@ class DataListState<E> extends State<DataList>
   List<E> _data = List();
 
   @override
-  Widget build(BuildContext context) =>
-      StreamBuilder<List>(
+  Widget build(BuildContext context) {
+    super.build(context);
+    return StreamBuilder<List>(
         initialData: List(),
         //stream won't be null in data list page
         stream: widget.stream != null
@@ -70,6 +71,7 @@ class DataListState<E> extends State<DataList>
           );
         },
       );
+  }
 
   //If the data list is a demo, we do not want to rebuild it every time we scroll
   @override

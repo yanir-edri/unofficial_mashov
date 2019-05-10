@@ -90,7 +90,8 @@ class MasterBloc extends Callback {
     db
       ..username = username
       ..password = password;
-    _refreshController.login().then((isSuccess) => onComplete(isSuccess));
+
+    _refreshController.loginDB().then((isSuccess) => onComplete(isSuccess));
   }
 
   tryLoginFromDB(void onComplete(bool success)) {

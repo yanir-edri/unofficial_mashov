@@ -72,7 +72,7 @@ class RefreshController {
     print("refresh called with api $api\n");
     if (_shouldPerformLogin) {
       _queuedRequests.add(api);
-      login();
+      loginDB();
     }
     if (_runningRequests.contains(api) || _queuedRequests.contains(api))
       return false;
@@ -131,7 +131,7 @@ class RefreshController {
           _runningRequests.remove(api);
           _callbacks.forEach((c) => c.onSuccess(api));
         } else if (result.isNeedToLogin) {
-          login();
+          loginDB();
         } else if (result.isForbidden) {
           _runningRequests.remove(api);
           _callbacks.forEach((c) => c.onSuspend());
@@ -143,54 +143,69 @@ class RefreshController {
     }
   }
 
-  Future<bool> login() {
+  Future<bool> loginDB() =>
+      login(_databaseController.school, _databaseController.username,
+          _databaseController.password, _databaseController.year);
+
+  Future<bool> login(School school, String username, String password, int year,
+      {int tries: 1}) async {
     if (!_isPerformingLogin) {
       _isPerformingLogin = true;
       _queuedRequests += _runningRequests;
       _runningRequests.clear();
+      await _databaseController.clearData();
       return _apiController
-          .login(_databaseController.school, _databaseController.username,
-          _databaseController.password, _databaseController.year)
+          .login(school, username, password, year)
           .then((result) {
         if (result.isSuccess) {
-          if (result.isOk) {
-            LoginData data = result.value.data;
-            Student student = result.value.students.first;
-            _databaseController
-              ..sessionId = data.sessionId
-              ..userId = data.userId
-              ..classCode = student.classCode
-              ..classNum = student.classNum.toString()
-              ..privateName = student.privateName
-              ..familyName = student.familyName;
-
-            _isPerformingLogin = false;
-            _shouldPerformLogin = false;
-            _queuedRequests.forEach((api) => _refreshInternal(api));
-            _queuedRequests.clear();
-            _callbacks.forEach((c) => c.onLogin());
-            return true;
-          } else {
-            _isPerformingLogin = false;
-            _shouldPerformLogin = false;
-            _queuedRequests.clear();
-            _runningRequests.clear();
-            if (result.isNeedToLogin) {
-              _databaseController.clearData();
-              _callbacks.forEach((c) => c.onUnauthorized());
-            } else if (result.isForbidden) {
-              _callbacks.forEach((c) => c.onSuspend());
-            } else {
-              _shouldPerformLogin = true;
-              _callbacks.forEach((c) => c.onLoginFail());
+          LoginData data = result.value.data;
+          Student student = result.value.students.first;
+          _databaseController
+            ..sessionId = data.sessionId
+            ..userId = data.userId
+            ..classCode = student.classCode
+            ..classNum = student.classNum.toString()
+            ..privateName = student.privateName
+            ..familyName = student.familyName
+            ..school = school
+            ..username = username
+            ..password = password
+            ..year = year;
+          _isPerformingLogin = false;
+          _shouldPerformLogin = false;
+          _queuedRequests.forEach((api) => _refreshInternal(api));
+          _queuedRequests.clear();
+          _callbacks.forEach((c) => c.onLogin());
+          return true;
+        } else {
+          print("Error logging in($tries): ${result.exception}");
+          if (result.isNeedToLogin) {
+            _isPerformingLogin = _shouldPerformLogin = false;
+            if (tries > 3) {
+              print("quitting.");
+              _queuedRequests.clear();
+              _runningRequests.clear();
+              /*if (result.isNeedToLogin) {
+                _databaseController.clearData();
+                _callbacks.forEach((c) => c.onUnauthorized());
+              } else if (result.isForbidden) {
+                _callbacks.forEach((c) => c.onSuspend());
+              } else {
+                _shouldPerformLogin = true;
+                _callbacks.forEach((c) => c.onLoginFail());
+              }*/
+              return false;
             }
+            print("trying to login again.");
+            return login(school, username, password, year, tries: tries + 1);
+
+          } else {
+            //something bad happened
+            print(
+                "some REALLY bad error. I mean, you should contact a programmer or something.\n");
+            print("debug info: ${result.exception}");
             return false;
           }
-        } else {
-          //something bad happened
-          print(
-              "some REALLY bad error. I mean, you should contact a programmer or something.\n");
-          return false;
         }
       });
     }

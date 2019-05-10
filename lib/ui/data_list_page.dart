@@ -158,7 +158,8 @@ class _DataListPageState<E> extends State<DataListPage<E>> {
               Iterable<int> gradesNum =
               grades.where((g) => g.grade != 0).map((g) => g.grade);
               int len = gradesNum.length;
-              double average = gradesNum.reduce((n1, n2) => n1 + n2) / len;
+              double average = len != 0 ? gradesNum.reduce((n1, n2) =>
+              n1 + n2) / len : 0;
               return Row(children: <Widget>[
                 Spacer(),
                 OverviewItem(title: "כמות מבחנים", data: snap.data.length),
