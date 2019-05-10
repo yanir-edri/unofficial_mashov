@@ -141,12 +141,11 @@ class _DataListPageState<E> extends State<DataListPage<E>> {
   @override
   void dispose() {
     _contentSubject.close();
-    _filter = null;
+    _filter = (items) => Future.value(items);
     super.dispose();
   }
 
   Widget buildOverview<E>(Stream<List<E>> data, Api api, List<E> initialData) {
-    print("Stream builder builded");
     return StreamBuilder<List<E>>(
         stream: data,
         initialData: initialData,

@@ -111,24 +111,22 @@ class MasterBloc extends Callback {
       data = {"overview": true};
     else
       data["overview"] = true;
-
     return _getData<num>(api, data: data);
   }
 
   Observable<E> _getData<E>(Api api, {Map data}) {
-    ApiPublishSubject<E> subject = _publishSubjects.firstWhere(
+    ApiPublishSubject subject = _publishSubjects.firstWhere(
             (p) =>
-        p.api == api &&
-            p.data == data &&
-            p.data["overview"] == data["overview"],
+        p.api == api && data.keys.every((key) => data[key] == p.data[key]),
         orElse: () => null);
     if (subject != null) {
-      print("subject was not null\n");
+      print("subject of api $api was not null");
       Future.delayed(_100ms, () => subject.flush());
       return subject.ps.stream;
     }
     // ignore: close_sinks
     PublishSubject<E> ps = PublishSubject();
+
     _publishSubjects.add(ApiPublishSubject(ps, api, db.getApiData, data: data));
     refreshController.refresh(api, data: data);
     return ps.stream;
