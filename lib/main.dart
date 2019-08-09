@@ -306,7 +306,7 @@ void main() {
                             ),
                           ],
                         ),
-                        subtitle: Text(Inject.bagrutDate(grade.date)));
+                        subtitle: Text(Inject.bagrutDate(grade.moed)));
                   },
                   filters: [
                     MenuFilter(

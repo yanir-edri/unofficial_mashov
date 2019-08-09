@@ -414,6 +414,7 @@ class Inject {
     String year = date.substring(0, 4);
     String month = date.substring(4);
     String monthStr = "";
+
     switch (month) {
       case "06":
         monthStr = "קיץ";
@@ -426,6 +427,7 @@ class Inject {
         monthStr = "חורף";
         break;
     }
+    print("month is $month so monthstr is $monthStr");
     return "$year $monthStr";
   }
 }
