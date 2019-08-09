@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:unofficial_mashov/contollers/bloc.dart';
 import 'package:unofficial_mashov/inject.dart';
 
 class LoginRoute extends StatefulWidget {
@@ -23,10 +22,10 @@ class LoginRouteState extends State<LoginRoute> {
 
   @override
   Widget build(BuildContext context) {
-    if (bloc.hasCredentials()) {
-      _usernameController.text = bloc.db.username;
-      _passwordController.text = bloc.db.password;
-      bloc.tryLoginFromDB((isSuccessful) {
+    if (Inject.hasCredentials()) {
+      _usernameController.text = Inject.db.username;
+      _passwordController.text = Inject.db.password;
+      Inject.tryLoginFromDB((isSuccessful) {
         if (isSuccessful) {
           Navigator.pushReplacementNamed(context, '/home');
         } else {
@@ -75,7 +74,7 @@ class LoginRouteState extends State<LoginRoute> {
                             // username is _usernameController.text
                             //password is _passwordController.text
                             //year is $year
-                            bloc.tryLogin(
+                            Inject.tryLogin(
                                 _usernameController.text,
                                 _passwordController.text,
                                     (isSuccessful) {

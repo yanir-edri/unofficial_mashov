@@ -5,16 +5,15 @@ import 'dart:io';
 import 'package:mashov_api/mashov_api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unofficial_mashov/contollers/files_controller.dart';
-import 'package:unofficial_mashov/contollers/refresh_controller.dart';
 
-class DatabaseController extends Callback {
+class DatabaseController {
   SharedPreferences _prefs;
 
   static File _conversationsFile;
   static File _behaveEventsFile;
   static File _contactsFile;
   static File _gradesFile;
-  static File _bagrutGradesFile;
+  static File _bagrutFile;
   static File _groupsFile;
   static File _timetableFile;
   static File _maakavFile;
@@ -147,8 +146,8 @@ class DatabaseController extends Callback {
         return l;
       });
 
-  Future<List<BagrutGrade>> get bagrutGrades =>
-      _getListFromFile(_bagrutGradesFile, BagrutGrade.fromJson).then((l) {
+  Future<List<Bagrut>> get bagrut =>
+      _getListFromFile<Bagrut>(_bagrutFile, Bagrut.fromJson).then((l) {
         l.sort((o1, o2) => o2.date.compareTo(o1.date));
         return l;
       });
@@ -191,7 +190,7 @@ class DatabaseController extends Callback {
 
   set grades(dynamic value) => _setFile(_gradesFile, value);
 
-  set bagrutGrades(dynamic value) => _setFile(_bagrutGradesFile, value);
+  set bagrut(dynamic value) => _setFile(_bagrutFile, value);
 
   set timetable(dynamic json) => _setFile(_timetableFile, json);
 
@@ -231,7 +230,7 @@ class DatabaseController extends Callback {
       filesController.getFile("grades.json").then((file) => _gradesFile = file),
       filesController
           .getFile("bagrut.json")
-          .then((file) => _bagrutGradesFile = file),
+          .then((file) => _bagrutFile = file),
       filesController.getFile("groups.json").then((file) => _groupsFile = file),
       filesController
           .getFile("timetable.json")
@@ -324,7 +323,7 @@ class DatabaseController extends Callback {
         _timetableFile.exists(),
         _groupsFile.exists(),
         _gradesFile.exists(),
-        _bagrutGradesFile.exists(),
+        _bagrutFile.exists(),
         _behaveEventsFile.exists(),
         _maakavFile.exists(),
         _conversationsFile.exists()
@@ -450,7 +449,7 @@ class DatabaseController extends Callback {
 //          if (data != null) if (data.containsKey("groupId"))
 //            return getContacts(groupId: data["groupId"]);
 //          return getContacts();
-        case Api.BagrutGrades:
+        case Api.Bagrut:
         //just like grades
           if (data.containsKey("amount")) {
             return grades.then((grades) => grades.length);
@@ -506,8 +505,8 @@ class DatabaseController extends Callback {
           if (data != null) if (data.containsKey("groupId"))
             return getContacts(groupId: data["groupId"]);
           return getContacts();
-        case Api.BagrutGrades:
-          return bagrutGrades;
+        case Api.Bagrut:
+          return bagrut;
         case Api.BehaveEvents:
           return behaveEvents;
         case Api.Messages:

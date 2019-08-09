@@ -1,29 +1,28 @@
 import 'dart:async';
 
 import 'package:mashov_api/mashov_api.dart';
-import 'package:unofficial_mashov/contollers/bloc.dart';
 import 'package:unofficial_mashov/contollers/database_controller.dart';
+import 'package:unofficial_mashov/inject.dart';
 
 class RefreshController {
   ApiController _apiController;
   DatabaseController _databaseController;
-  List<Callback> _callbacks = List();
   List<Api> _runningRequests = List();
   List<Api> _queuedRequests = List();
   bool _isPerformingLogin = false;
   bool _shouldPerformLogin = false;
 
   RefreshController() {
-    _apiController = bloc.apiController;
-    _databaseController = bloc.db;
+    _apiController = Inject.apiController;
+    _databaseController = Inject.db;
     _apiController.attachRawDataProcessor((dynamic data, Api api) {
 //      print("proccessing raw data of api $api, data=$data");
       switch (api) {
         case Api.Grades:
           _databaseController.grades = data;
           break;
-        case Api.BagrutGrades:
-          _databaseController.bagrutGrades = data;
+        case Api.Bagrut:
+          _databaseController.bagrut = data;
           break;
         case Api.BehaveEvents:
           _databaseController.behaveEvents = data;
@@ -60,6 +59,9 @@ class RefreshController {
       }
     });
     _apiController.attachDataProcessor((dynamic data, Api api) {
+      if (Inject.providers.containsKey(api)) {
+        Inject.providers[api].data = data;
+      }
       if (api == Api.Login) {
         _databaseController.setLoginData(data);
       } else if (api == Api.MessagesCount) {
@@ -97,8 +99,8 @@ class RefreshController {
       case Api.Alfon:
         request = _apiController.getContacts(userId, data["group"] ?? "-1");
         break;
-      case Api.BagrutGrades:
-        request = _apiController.getBagrutGrades(userId);
+      case Api.Bagrut:
+        request = _apiController.getBagrut(userId);
         break;
       case Api.BehaveEvents:
         request = _apiController.getBehaveEvents(userId);
@@ -121,6 +123,9 @@ class RefreshController {
       case Api.MessagesCount:
         request = _apiController.getMessagesCount();
         break;
+      case Api.Maakav:
+        request = _apiController.getMaakav(userId);
+        break;
       default:
         break;
     }
@@ -129,15 +134,15 @@ class RefreshController {
 //        print("request of api $api was ${result.isSuccess}");
         if (result.isSuccess) {
           _runningRequests.remove(api);
-          _callbacks.forEach((c) => c.onSuccess(api));
+//          _callbacks.forEach((c) => c.onSuccess(api));
         } else if (result.isNeedToLogin) {
           loginDB();
         } else if (result.isForbidden) {
           _runningRequests.remove(api);
-          _callbacks.forEach((c) => c.onSuspend());
+//          _callbacks.forEach((c) => c.onSuspend());
         } else {
           _runningRequests.remove(api);
-          _callbacks.forEach((c) => c.onFail(api));
+//          _callbacks.forEach((c) => c.onFail(api));
         }
       });
     }
@@ -175,7 +180,14 @@ class RefreshController {
           _shouldPerformLogin = false;
           _queuedRequests.forEach((api) => _refreshInternal(api));
           _queuedRequests.clear();
-          _callbacks.forEach((c) => c.onLogin());
+          refreshAll([
+            Api.Homework,
+            Api.Timetable,
+            Api.Grades,
+            Api.BehaveEvents,
+            Api.Maakav,
+            Api.Bagrut
+          ]);
           return true;
         } else {
           print("Error logging in($tries): ${result.exception}");
@@ -202,7 +214,7 @@ class RefreshController {
           } else {
             //something bad happened
             print(
-                "some REALLY bad error. I mean, you should contact a programmer or something.\n");
+                "some REALLY bad error. I mean, you should contact a real programmer or something.\n");
             print("debug info: ${result.exception}");
             return false;
           }
@@ -212,30 +224,4 @@ class RefreshController {
     return Future.value(true);
   }
 
-  attach(Callback callback) {
-//    print("attaching callback");
-    detach(callback);
-    _callbacks.add(callback);
-  }
-
-  detach(Callback callback) {
-    if (_callbacks.contains(callback)) {
-//      print("detaching callback");
-      _callbacks.remove(callback);
-    }
-  }
-}
-
-class Callback {
-  onSuccess(Api api) {}
-
-  onFail(Api api) {}
-
-  onLoginFail() {}
-
-  onSuspend() {}
-
-  onUnauthorized() {}
-
-  onLogin() {}
 }

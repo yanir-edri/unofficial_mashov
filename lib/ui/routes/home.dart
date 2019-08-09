@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:mashov_api/mashov_api.dart';
-import 'package:unofficial_mashov/contollers/bloc.dart';
+import 'package:provider/provider.dart';
 import 'package:unofficial_mashov/inject.dart';
+import 'package:unofficial_mashov/providers/api_provider.dart';
 import 'package:unofficial_mashov/ui/data_list.dart';
 import 'package:unofficial_mashov/ui/overview_item.dart';
 
 class HomeRoute extends StatelessWidget {
-
-  final Widget todayList = DataList<Lesson>(
-      isDemo: true, builder: Inject.timetableBuilder(), api: Api.Timetable);
+  final Widget todayList =
+  DataList<Lesson>(isDemo: true, builder: Inject.timetableBuilder());
 
   final Widget homeworkList = DataList<Homework>(
       isDemo: true,
@@ -19,8 +19,7 @@ class HomeRoute extends StatelessWidget {
           subtitle: Text(homework.subject),
           /*isThreeLine: true,*/
         );
-      },
-      api: Api.Homework);
+      });
   final Widget gradesList = DataList<Grade>(
       isDemo: true,
       builder: (BuildContext context, dynamic g) {
@@ -44,8 +43,7 @@ class HomeRoute extends StatelessWidget {
               Spacer(),
               Text("${Inject.dateTimeToDateString(grade.eventDate)}")
             ]));
-      },
-      api: Api.Grades);
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -152,18 +150,15 @@ class HomeRoute extends StatelessWidget {
           child: Center(child: Card(elevation: 2.0, child: todayList)),
           height: 300),
     ];
-
-    Widget content = Inject.rtl(ListView(
-      children: bodyContent,
-    ));
     Scaffold test = Scaffold(
-      drawer: bloc.getDrawer(context),
+      drawer: Inject.getDrawer(context),
       key: key,
-      body: NestedScrollView(
-        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) =>
-        [_HomeOverview()],
-        body: content,
-      ),
+      body: CustomScrollView(slivers: <Widget>[
+        headerBuilder(context),
+        SliverList(
+          delegate: SliverChildListDelegate(bodyContent),
+        )
+      ]),
     );
     return Inject.rtl(test);
   }
@@ -173,10 +168,10 @@ class HomeRoute extends StatelessWidget {
         content: Inject.rtl(Text("אני...אני עובד על זה! חכו לגרסה הבאה :)"))));
   }
 
-  List<Widget> headerBuilder(BuildContext context, bool innerBoxIsScrolled) {
-    return <Widget>[
+  Widget headerBuilder(BuildContext context) =>
       SliverAppBar(
-        expandedHeight: 150.0,
+        //height needed to be exactly on the line of the drawer
+        expandedHeight: 161.0,
         floating: false,
         pinned: true,
         flexibleSpace: FlexibleSpaceBar(
@@ -187,68 +182,20 @@ class HomeRoute extends StatelessWidget {
               children: <Widget>[
                 Spacer(),
                 OverviewItem(
-                    title: "ממוצע", stream: bloc.getOverviewData(Api.Grades)),
+                    title: "ממוצע",
+                    data: Provider.of<ApiProvider<Grade>>(context)
+                        .getUnfilteredOverviews()["ממוצע"]),
                 Spacer(),
                 OverviewItem(
-                    isZeroGood: true,
                     title: "שעות להיום",
-                    stream: bloc.getOverviewData(Api.Timetable)),
+                    data: Provider.of<ApiProvider<Lesson>>(context)
+                        .getUnfilteredOverviews()["שעות להיום"]),
                 Spacer(),
-                OverviewItem(
-                    title: "הודעות חדשות",
-                    stream: bloc.getOverviewData(Api.MessagesCount),
-                    isZeroGood: true),
+                OverviewItem(title: "הודעות חדשות", data: "0"),
                 Spacer()
               ],
             ),
           ),
         ),
-      )
-    ];
-  }
-}
-
-class _HomeOverview extends StatefulWidget {
-  @override
-  _HomeOverviewState createState() => _HomeOverviewState();
-}
-
-class _HomeOverviewState extends State<_HomeOverview>
-    with AutomaticKeepAliveClientMixin<_HomeOverview> {
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return SliverAppBar(
-      expandedHeight: 150.0,
-      floating: false,
-      pinned: true,
-      flexibleSpace: FlexibleSpaceBar(
-        centerTitle: true,
-        background: Padding(
-          padding: const EdgeInsets.only(top: 80.0),
-          child: Row(
-            children: <Widget>[
-              Spacer(),
-              OverviewItem(
-                  title: "ממוצע", stream: bloc.getOverviewData(Api.Grades)),
-              Spacer(),
-              OverviewItem(
-                  isZeroGood: true,
-                  title: "שעות להיום",
-                  stream: bloc.getOverviewData(Api.Timetable)),
-              Spacer(),
-              OverviewItem(
-                  title: "הודעות חדשות",
-                  stream: bloc.getOverviewData(Api.MessagesCount),
-                  isZeroGood: true),
-              Spacer()
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  bool get wantKeepAlive => true;
+      );
 }

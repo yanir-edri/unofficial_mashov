@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:downloads_path_provider/downloads_path_provider.dart';
 import 'package:path_provider/path_provider.dart';
 
 final filesController = new FilesController._new();
@@ -9,6 +10,7 @@ class FilesController {
   Directory _messagesDir;
   Directory _contactsDir;
   Directory _root;
+  Directory _downloads;
 
   Future<bool> initStorage() {
     print("storage is initializing");
@@ -30,7 +32,9 @@ class FilesController {
       if (!isExist) _contactsDir.create();
       return Future.value(_contactsDir);
     })
+        .then((d) => DownloadsPathProvider.downloadsDirectory)
         .then((d) {
+      _downloads = d;
       print("storage is done initializing");
     })
         .then((n) => true)
@@ -86,4 +90,11 @@ class FilesController {
         print(error);
         return false;
       });
+
+  Future<File> getDownloadFile(String name) {
+    File file = File("${_downloads.path}/$name");
+    return file
+        .exists()
+        .then((isExists) => isExists ? Future.value(file) : file.create());
+  }
 }

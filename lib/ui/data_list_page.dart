@@ -2,10 +2,9 @@ import 'dart:async';
 
 import 'package:fab_menu/fab_menu.dart';
 import 'package:flutter/material.dart';
-import 'package:mashov_api/mashov_api.dart';
-import 'package:rxdart/rxdart.dart';
-import 'package:unofficial_mashov/contollers/bloc.dart';
+import 'package:provider/provider.dart';
 import 'package:unofficial_mashov/inject.dart';
+import 'package:unofficial_mashov/providers/api_provider.dart';
 import 'package:unofficial_mashov/ui/data_list.dart';
 import 'package:unofficial_mashov/ui/overview_item.dart';
 
@@ -28,45 +27,35 @@ class MenuFilter {
   }
 }
 
-class DataListPage<E> extends StatefulWidget {
-  final String title;
+class DataListPage<E> extends StatelessWidget {
   final Builder builder;
-  final Api api;
   final Map additionalData;
   final List<MenuFilter> filters;
 
   DataListPage({Key key,
-    @required this.title,
     @required this.builder,
-    @required this.api,
     this.filters,
     this.additionalData})
       : super(key: key);
 
   @override
-  _DataListPageState<E> createState() {
-    return _DataListPageState();
-  }
-}
-
-class _DataListPageState<E> extends State<DataListPage<E>> {
-  PublishSubject<List<E>> _contentSubject;
-  List<E> _cache;
-  List<E> _filteredCache;
-  FutureFilter _filter = (items) => Future.value(items);
-
-  @override
   Widget build(BuildContext context) {
-    Widget body = NestedScrollView(
-        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
-          return <Widget>[
-            SliverAppBar(
-              expandedHeight: 150.0,
+    ApiProvider<E> provider = Provider.of<ApiProvider<E>>(context);
+    List<OverviewItem> overviews = List();
+    provider
+        .getFilteredOverviews()
+        .forEach((a, b) => overviews.add(OverviewItem(title: a, data: b)));
+    Widget body = CustomScrollView(
+      slivers: <Widget>[
+        if (overviews.length > 0)
+          SliverAppBar(
+            //height needed to be exactly on the line of the drawer
+              expandedHeight: 161.0,
               floating: false,
               pinned: true,
               flexibleSpace: FlexibleSpaceBar(
-                centerTitle: true,
-                background: Padding(
+                  centerTitle: true,
+                  background: Padding(
                     padding: const EdgeInsets.only(top: 80.0),
                     /*
                     This is problematic because this header is called a lot of times (every scroll)
@@ -75,27 +64,24 @@ class _DataListPageState<E> extends State<DataListPage<E>> {
                     this cannot be replaced with something static becuase filters might stream new data
                     and yet stream builder is.. not small
                     */
-                    child: buildOverview(
-                        _contentSubject.stream, widget.api, _filteredCache)),
-              ),
-            )
-          ];
-        },
-        body: DataList(
-            api: widget.api,
-            builder: widget.builder,
-            isDemo: false,
-            additionalData: widget.additionalData,
-            stream: _contentSubject.stream));
+                    child: Row(children: <Widget>[
+                      Spacer(),
+                      for (OverviewItem o in overviews) ...[o, Spacer()]
+                    ]),
+                  ))),
+        DataList<E>(
+            builder: builder, isDemo: false, additionalData: additionalData)
+      ],
+    );
 
     return Inject.rtl(Scaffold(
-        drawer: bloc.getDrawer(context),
+        drawer: Inject.getDrawer(context),
         body: body,
-        floatingActionButton: widget.filters != null
+        floatingActionButton: filters != null
             ? FabMenu(
           mainIcon: Icons.filter_list,
           maskColor: Colors.transparent,
-          menus: widget.filters
+          menus: filters
               .map((menuFilter) =>
               MenuData(menuFilter.icon,
                       (context, data) => _handleFab(context, data.labelText),
@@ -106,84 +92,17 @@ class _DataListPageState<E> extends State<DataListPage<E>> {
   }
 
   _handleFab(BuildContext context, String label) {
+    ApiProvider provider = Provider.of<ApiProvider<E>>(context, listen: false);
     MenuFilter item =
-    widget.filters.firstWhere((f) => f.label == label, orElse: () => null);
+    filters.firstWhere((f) => f.label == label, orElse: () => null);
     if (item != null) {
       if (item.filter != null) {
-        _filter = (items) => Future.value(item.filter(items));
+        provider.filter = (items) => Future.value(item.filter(items));
       } else {
-        _filter = item.futureFilter;
+        provider.filter = item.futureFilter;
       }
-      _update();
     } else {
       print("error filtering data: no filter with label $label");
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    bloc.getApiData(widget.api, data: widget.additionalData).listen((data) {
-      _cache = data;
-      _update();
-    });
-    _contentSubject = PublishSubject<List<E>>();
-  }
-
-  _update() {
-    _filter(_cache).then((data) {
-      _contentSubject.sink.add(data);
-      _filteredCache = data;
-    });
-//    _contentSubject.sink.add(_filter(_cache));
-  }
-
-  @override
-  void dispose() {
-    _contentSubject.close();
-    _filter = (items) => Future.value(items);
-    super.dispose();
-  }
-
-  Widget buildOverview<E>(Stream<List<E>> data, Api api, List<E> initialData) {
-    return StreamBuilder<List<E>>(
-        stream: data,
-        initialData: initialData,
-        builder: (context, snap) {
-          if (!snap.hasData || snap.data == null) return Text("");
-          switch (api) {
-            case Api.Grades:
-              List<Grade> grades = snap.data.cast();
-              Iterable<int> gradesNum =
-              grades.where((g) => g.grade != 0).map((g) => g.grade);
-              int len = gradesNum.length;
-              double average = len != 0 ? gradesNum.reduce((n1, n2) =>
-              n1 + n2) / len : 0;
-              return Row(children: <Widget>[
-                Spacer(),
-                OverviewItem(title: "כמות מבחנים", data: snap.data.length),
-                Spacer(),
-                OverviewItem(title: "ממוצע", data: average, precision: 1),
-                Spacer()
-              ]);
-            case Api.BehaveEvents:
-              List<BehaveEvent> events = snap.data.cast();
-              int justified = events
-                  .where((e) => e.justificationId > 0)
-                  .length;
-              return Row(children: <Widget>[
-                Spacer(),
-                OverviewItem(title: "מוצדקים", data: justified),
-                Spacer(),
-                OverviewItem(
-                    title: "לא מוצדקים", data: events.length - justified),
-                Spacer()
-              ]);
-
-            default:
-              print("no overviews set for api $api, breaking");
-              return Text("no overview set");
-          }
-        });
   }
 }
