@@ -38,6 +38,11 @@ class DataListPage<E> extends StatelessWidget {
     this.additionalData})
       : super(key: key);
 
+
+  Widget notif(Widget o) {
+    print("notifting of whatever");
+    return o;
+  }
   @override
   Widget build(BuildContext context) {
     ApiProvider<E> provider = Provider.of<ApiProvider<E>>(context);
@@ -66,7 +71,7 @@ class DataListPage<E> extends StatelessWidget {
                     */
                     child: Row(children: <Widget>[
                       Spacer(),
-                      for (OverviewItem o in overviews) ...[o, Spacer()]
+                      for (OverviewItem o in overviews) ...[notif(o), Spacer()]
                     ]),
                   ))),
         DataList<E>(

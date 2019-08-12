@@ -27,11 +27,12 @@ class DataList<E> extends StatelessWidget {
         data = Inject.timetableDayProcess(data, isDemo);
       } else if (isDemo) {
         //if it's timetable, we will want to take the whole day.
-        data = data.take(min(data.length, 5)).toList();
+        //TODO: reverse list first
+        data = data.reversed.take(min(data.length, 5)).toList();
       }
       if (isDemo) {
         return ListView.builder(
-            physics: BouncingScrollPhysics(),
+            physics: ClampingScrollPhysics(),
             itemCount: data.length,
             itemBuilder: (BuildContext context, int i) =>
                 builder(context, data[i]));

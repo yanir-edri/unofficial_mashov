@@ -29,7 +29,7 @@ class FilesController {
       return _contactsDir.exists();
     })
         .then((isExist) {
-      if (!isExist) _contactsDir.create();
+      if (!isExist) return _contactsDir.create();
       return Future.value(_contactsDir);
     })
         .then((d) => DownloadsPathProvider.downloadsDirectory)
