@@ -47,6 +47,7 @@ class LoginRouteState extends State<LoginRoute> {
                     if (value.isEmpty) {
                       return "אנא הכנס שם משתמש או ת.ז.";
                     }
+                    return null;
                   }),
               TextFormField(
                   controller: _passwordController,
@@ -56,6 +57,7 @@ class LoginRouteState extends State<LoginRoute> {
                     if (value.isEmpty) {
                       return "אנא הכנס סיסמה";
                     }
+                    return null;
                   },
                   obscureText: true),
               Padding(

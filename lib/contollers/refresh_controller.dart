@@ -15,49 +15,6 @@ class RefreshController {
   RefreshController() {
     _apiController = Inject.apiController;
     _databaseController = Inject.db;
-    _apiController.attachRawDataProcessor((dynamic data, Api api) {
-//      print("proccessing raw data of api $api, data=$data");
-      switch (api) {
-        case Api.Grades:
-          _databaseController.grades = data;
-          break;
-        case Api.Bagrut:
-          _databaseController.bagrut = data;
-          break;
-        case Api.BehaveEvents:
-          _databaseController.behaveEvents = data;
-          break;
-        case Api.Groups:
-          _databaseController.groups = data;
-          break;
-        case Api.Timetable:
-          _databaseController.timetable = data;
-          break;
-        case Api.Alfon:
-          _databaseController.contacts = data;
-          break;
-        case Api.Messages:
-          _databaseController.conversations = data;
-          break;
-        case Api.Message:
-          _databaseController.setConversation(data);
-          break;
-        case Api.Maakav:
-          _databaseController.maakavReports = data;
-          break;
-        case Api.Homework:
-          _databaseController.homework = data;
-          break;
-        case Api.Hatamot:
-          _databaseController.hatamot = data;
-          break;
-        case Api.Login:
-          print("login is $data\n");
-          break;
-        default:
-          break;
-      }
-    });
     _apiController.attachDataProcessor((dynamic data, Api api) {
       if (Inject.providers.containsKey(api)) {
         Inject.providers[api].data = data;

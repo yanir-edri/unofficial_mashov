@@ -37,7 +37,6 @@ class Inject {
           _refreshController = RefreshController();
           return filesController.initStorage();
         })
-            .then((n) => _databaseController.init())
             .then((successful) =>
         !successful
             ? Future.value(Result<List<School>>(
@@ -103,6 +102,37 @@ class Inject {
     });
   }
 
+  static String _currentRoute = "/home";
+
+  static List<Api> _routeToAPIs(String route) {
+    if (route == "/home") return [Api.Grades, Api.Homework, Api.Timetable];
+    if (route == "/grades") return [Api.Grades];
+    if (route == "/bagrut") return [Api.Bagrut];
+    if (route == "/behave") return [Api.BehaveEvents];
+    if (route == "/timetable") return [Api.Timetable];
+    if (route == "/maakav") return [Api.Maakav];
+    print("no apis on route \"$route\"");
+    return [];
+  }
+
+  ///changes all needed providers when going from route "from" to route "to"
+  ///an example when not needing to clear all is from home to grades
+  static _changeProviders(String from, String to) {
+    List<Api> p = List();
+    //List all active providers
+    p.addAll(_routeToAPIs(from));
+    //List all going-to-be active providers
+    _routeToAPIs(to).forEach((api) {
+      if (p.contains(api)) {
+        //if already active, we won't need to clear them
+        p.remove(api);
+      } else {
+        //if not active, we will want them to have data
+        Inject.providers[api].requestData();
+      }
+    });
+    p.forEach((api) => Inject.providers[api].clear());
+  }
   static Widget getDrawer(BuildContext context) =>
       Drawer(
           child: ListView(padding: EdgeInsets.zero, children: <Widget>[
@@ -148,14 +178,11 @@ class Inject {
           ]));
 
   static void closeDrawerAndNavigate(BuildContext context, String route) {
+    _changeProviders(_currentRoute, route);
+    _currentRoute = route;
     Navigator.pop(context);
-//    if (!ModalRoute
-//        .of(context)
-//        .settings
-//        .name
-//        .contains(route)) {
-//    }
-    Navigator.pushNamed(context, route);
+    //TODO: remove replacement and store route history so we could go back
+    Navigator.pushReplacementNamed(context, route);
   }
 
   //If picture is set, return it. Otherwise, return future builder
@@ -369,8 +396,11 @@ class Inject {
     return _downloadFile(maakavId, attachment);
   }
 
+  static Function() _requestApi(Api api) =>
+          () => refreshController.refresh(api);
   static Map<Api, ApiProvider> providers = {
     Api.Grades: ApiProvider<Grade>(
+        requestData: _requestApi(Api.Grades),
         overviewsBuilder: (grades) =>
         {
           "כמות מבחנים": "${grades.length}",
@@ -378,7 +408,9 @@ class Inject {
           "${grades.length > 0 ? (grades.map((g) => g.grade).reduce((a,
               b) => a + b) / grades.length).toStringAsPrecision(2) : ""}"
         }),
-    Api.BehaveEvents: ApiProvider<BehaveEvent>(overviewsBuilder: (events) {
+    Api.BehaveEvents: ApiProvider<BehaveEvent>(
+        requestData: _requestApi(Api.BehaveEvents),
+        overviewsBuilder: (events) {
       int justified = 0,
           unjustified = 0;
       events.forEach((event) {
@@ -390,15 +422,20 @@ class Inject {
       return {"מוצדקים": "$justified", "לא מוצדקים": "$unjustified"};
     }),
     Api.Timetable: ApiProvider<Lesson>(
+        requestData: _requestApi(Api.Timetable),
         overviewsBuilder: (lessons) =>
         {"שעות להיום": "${lessons
             .where((l) => l.day == today)
             .length}"}),
     Api.Homework: ApiProvider<Homework>(
+        requestData: _requestApi(Api.Homework),
         overviewsBuilder: (hw) => {"כמות": "${hw.length}"}),
     Api.Maakav: ApiProvider<Maakav>(
+        requestData: _requestApi(Api.Maakav),
         overviewsBuilder: (mk) => {"הערות מעקב": "${mk.length}"}),
-    Api.Bagrut: ApiProvider<Bagrut>(overviewsBuilder: (grades) {
+    Api.Bagrut: ApiProvider<Bagrut>(
+        requestData: _requestApi(Api.Bagrut),
+        overviewsBuilder: (grades) {
       List<int> testGrades =
       grades.where((g) => g.testGrade > 0).map((g) => g.testGrade).toList();
       return {

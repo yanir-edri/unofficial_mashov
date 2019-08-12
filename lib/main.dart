@@ -14,41 +14,41 @@ import 'package:unofficial_mashov/ui/routes/time_table.dart';
 
 
 void main() {
-  runApp(MaterialApp(
-      debugShowCheckedModeBanner: false,
-      initialRoute: '/',
-      routes: {
-        '/': (context) => MyApp(),
-        '/schools': (context) => ChooseSchoolRoute(),
-        '/login': (context) => LoginRoute(),
-        '/home': (context) =>
-            MultiProvider(child: HomeRoute(), providers: [
-              ChangeNotifierProvider<ApiProvider<Grade>>(
-                  builder: (_) => Inject.providers[Api.Grades]),
-              ChangeNotifierProvider<ApiProvider<Lesson>>(
-                  builder: (_) => Inject.providers[Api.Timetable]),
-              ChangeNotifierProvider<ApiProvider<Homework>>(
-                  builder: (_) => Inject.providers[Api.Homework])
-            ],),
-        '/grades': (context) =>
-            ChangeNotifierProvider<ApiProvider<Grade>>(
-              child: gradesRoute(context),
-              builder: (_) => Inject.providers[Api.Grades],),
-        '/behave': (context) =>
-            ChangeNotifierProvider<ApiProvider<BehaveEvent>>(
-              child: behaveRoute(context),
-              builder: (_) => Inject.providers[Api.BehaveEvents],),
-        '/timetable': (context) =>
-            ChangeNotifierProvider<ApiProvider<Lesson>>(child: TimeTable(),
-              builder: (_) => Inject.providers[Api.Timetable],),
-        '/maakav': (context) =>
-            ChangeNotifierProvider<ApiProvider<Maakav>>(
-                child: maakavRoute(context),
-                builder: (_) => Inject.providers[Api.Maakav]),
-        '/bagrut': (context) =>
-            ChangeNotifierProvider<ApiProvider<Bagrut>>(
-                child: bagrutRoute(context),
-                builder: (_) => Inject.providers[Api.Bagrut])}));
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider<ApiProvider<Grade>>(
+          builder: (_) => Inject.providers[Api.Grades]),
+      ChangeNotifierProvider<ApiProvider<BehaveEvent>>(
+          builder: (_) => Inject.providers[Api.BehaveEvents]),
+      ChangeNotifierProvider<ApiProvider<Lesson>>(
+          builder: (_) => Inject.providers[Api.Timetable]),
+      ChangeNotifierProvider<ApiProvider<Maakav>>(
+          builder: (_) => Inject.providers[Api.Maakav]),
+      ChangeNotifierProvider<ApiProvider<Homework>>(
+          builder: (_) => Inject.providers[Api.Homework]),
+      ChangeNotifierProvider<ApiProvider<Bagrut>>(
+          builder: (_) => Inject.providers[Api.Bagrut]),
+    ],
+    child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        initialRoute: '/',
+        routes: {
+          '/': (context) => MyApp(),
+          '/schools': (context) => ChooseSchoolRoute(),
+          '/login': (context) => LoginRoute(),
+          '/home': (context) =>
+              HomeRoute(),
+          '/grades': (context) =>
+              gradesRoute(context),
+          '/behave': (context) =>
+              behaveRoute(context),
+          '/timetable': (context) =>
+              TimeTable(),
+          '/maakav': (context) =>
+              maakavRoute(context),
+          '/bagrut': (context) =>
+              bagrutRoute(context)}),
+  ));
 }
 
 class MyApp extends StatefulWidget {
@@ -198,4 +198,38 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
+*/
+/*
+{
+        '/': (context) => MyApp(),
+        '/schools': (context) => ChooseSchoolRoute(),
+        '/login': (context) => LoginRoute(),
+        '/home': (context) =>
+            MultiProvider(child: HomeRoute(), providers: [
+              ChangeNotifierProvider<ApiProvider<Grade>>(
+                  builder: (_) => Inject.providers[Api.Grades]),
+              ChangeNotifierProvider<ApiProvider<Lesson>>(
+                  builder: (_) => Inject.providers[Api.Timetable]),
+              ChangeNotifierProvider<ApiProvider<Homework>>(
+                  builder: (_) => Inject.providers[Api.Homework])
+            ],),
+        '/grades': (context) =>
+            ChangeNotifierProvider<ApiProvider<Grade>>(
+              child: gradesRoute(context),
+              builder: (_) => Inject.providers[Api.Grades],),
+        '/behave': (context) =>
+            ChangeNotifierProvider<ApiProvider<BehaveEvent>>(
+              child: behaveRoute(context),
+              builder: (_) => Inject.providers[Api.BehaveEvents],),
+        '/timetable': (context) =>
+            ChangeNotifierProvider<ApiProvider<Lesson>>(child: TimeTable(),
+              builder: (_) => Inject.providers[Api.Timetable],),
+        '/maakav': (context) =>
+            ChangeNotifierProvider<ApiProvider<Maakav>>(
+                child: maakavRoute(context),
+                builder: (_) => Inject.providers[Api.Maakav]),
+        '/bagrut': (context) =>
+            ChangeNotifierProvider<ApiProvider<Bagrut>>(
+                child: bagrutRoute(context),
+                builder: (_) => Inject.providers[Api.Bagrut])}
 */

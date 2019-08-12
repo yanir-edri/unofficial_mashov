@@ -15,13 +15,31 @@ class ApiProvider<E> with ChangeNotifier {
 
   Map<String, String> getUnfilteredOverviews() => _buildOverviews(_cache);
 
-  ApiProvider(
-      {@required Map<String, String> Function(List<E> data) overviewsBuilder,
+  bool _requesting = false;
+  Function _requestData;
+
+  requestData() {
+    if (!_requesting) {
+      print("requesting ${E}s");
+      _requestData();
+      _requesting = true;
+    }
+  }
+
+  clear() {
+    print("clearing ${E}s");
+    _cache.clear();
+    _filtered.clear();
+  }
+
+  ApiProvider({@required Map<String, String> Function(List<
+      E> data) overviewsBuilder, @required Function requestData,
       List<E> Function(List<E> data) processor}) {
     _buildOverviews = overviewsBuilder;
     if (processor != null) {
       _processor = processor;
     }
+    _requestData = requestData;
   }
 
   List<E> get data => _filtered;
@@ -35,6 +53,7 @@ class ApiProvider<E> with ChangeNotifier {
       print("set data is empty, returning on $E");
       return;
     }
+    _requesting = false;
     if (_processor != null) {
       //might want to process the data, but not to filter it.
       //in this case, we'll use a processor.
