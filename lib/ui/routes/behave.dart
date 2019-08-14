@@ -8,6 +8,7 @@ DataListPage<BehaveEvent> behaveRoute(BuildContext context) {
   TextStyle passThrough =
       titleStyle.copyWith(decoration: TextDecoration.lineThrough);
   return DataListPage<BehaveEvent>(
+      notFoundMessage: "לא נמצאו אירועי התנהגות",
       additionalData: {"overview": false},
       builder: (BuildContext context, dynamic e) {
         BehaveEvent event = e;
@@ -54,9 +55,9 @@ DataListPage<BehaveEvent> behaveRoute(BuildContext context) {
               List<BehaveEvent> events = items.cast();
               //to set in order to remove duplicates
               return Inject.displayDialog(
-                      events.map((e) => e.text).toSet().toList(),
-                      "סוג אירוע",
-                      context)
+                  events.map((e) => e.text).toSet().toList(),
+                  "סוג אירוע",
+                  context)
                   .then((type) {
                 if (type != null && type.isNotEmpty)
                   events = events.where((e) => e.text == type).toList();
@@ -72,9 +73,9 @@ DataListPage<BehaveEvent> behaveRoute(BuildContext context) {
               List<BehaveEvent> events = items.cast();
               //to set in order to remove duplicates
               return Inject.displayDialog(
-                      events.map((e) => e.subject).toSet().toList(),
-                      "מקצוע",
-                      context)
+                  events.map((e) => e.subject).toSet().toList(),
+                  "מקצוע",
+                  context)
                   .then((subject) {
                 if (subject != null && subject.isNotEmpty)
                   events = events.where((e) => e.subject == subject).toList();
@@ -101,7 +102,7 @@ DataListPage<BehaveEvent> behaveRoute(BuildContext context) {
                       (e) => e.justificationId != 0 && e.justificationId != -1)
                   .toList();
               data.sort(
-                  (e1, e2) => e1.justificationId.compareTo(e2.justificationId));
+                      (e1, e2) => e1.justificationId.compareTo(e2.justificationId));
               return data;
             }),
         MenuFilter(

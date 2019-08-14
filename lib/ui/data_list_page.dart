@@ -31,18 +31,17 @@ class DataListPage<E> extends StatelessWidget {
   final Builder builder;
   final Map additionalData;
   final List<MenuFilter> filters;
+  final String title;
+  final String notFoundMessage;
 
   DataListPage({Key key,
     @required this.builder,
+    @required this.notFoundMessage,
     this.filters,
-    this.additionalData})
+    this.additionalData,
+    this.title})
       : super(key: key);
 
-
-  Widget notif(Widget o) {
-    print("notifting of whatever");
-    return o;
-  }
   @override
   Widget build(BuildContext context) {
     ApiProvider<E> provider = Provider.of<ApiProvider<E>>(context);
@@ -52,30 +51,37 @@ class DataListPage<E> extends StatelessWidget {
         .forEach((a, b) => overviews.add(OverviewItem(title: a, data: b)));
     Widget body = CustomScrollView(
       slivers: <Widget>[
-        if (overviews.length > 0)
-          SliverAppBar(
-            //height needed to be exactly on the line of the drawer
-              expandedHeight: 161.0,
-              floating: false,
-              pinned: true,
-              flexibleSpace: FlexibleSpaceBar(
-                  centerTitle: true,
-                  background: Padding(
-                    padding: const EdgeInsets.only(top: 80.0),
-                    /*
+        overviews.length > 0
+            ? SliverAppBar(
+          //height needed to be exactly on the line of the drawer
+            expandedHeight: 161.0,
+            floating: false,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+                centerTitle: true,
+                background: Padding(
+                  padding: const EdgeInsets.only(top: 80.0),
+                  /*
                     This is problematic because this header is called a lot of times (every scroll)
                     and might cause some performance issues
                     might want to replace this in the future to something more performance-wise
                     this cannot be replaced with something static becuase filters might stream new data
                     and yet stream builder is.. not small
                     */
-                    child: Row(children: <Widget>[
-                      Spacer(),
-                      for (OverviewItem o in overviews) ...[notif(o), Spacer()]
-                    ]),
-                  ))),
+                  child: Row(children: <Widget>[
+                    Spacer(),
+                    for (OverviewItem o in overviews) ...[o, Spacer()]
+                  ]),
+                )))
+            : SliverAppBar(
+          title: Text(title),
+        ),
         DataList<E>(
-            builder: builder, isDemo: false, additionalData: additionalData)
+          builder: builder,
+          isDemo: false,
+          additionalData: additionalData,
+          notFoundMessage: notFoundMessage,
+        )
       ],
     );
 

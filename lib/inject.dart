@@ -79,23 +79,27 @@ class Inject {
           school.id.toString().startsWith(pattern))
           .toList();
 
-  static void tryLogin(String username, String password,
+  static Future<bool> tryLogin(String username, String password,
       void onComplete(bool success)) {
     db
       ..username = username
       ..password = password;
 
-    _refreshController.loginDB().then((isSuccess) => onComplete(isSuccess));
+    return _refreshController.loginDB().then((isSuccess) {
+      onComplete(isSuccess);
+      return isSuccess;
+    });
   }
 
-  static tryLoginFromDB(void onComplete(bool success)) {
-    tryLogin(db.username, db.password, onComplete);
-  }
+  static Future<bool> tryLoginFromDB(void onComplete(bool success)) =>
+      tryLogin(db.username, db.password, onComplete);
 
   static bool hasCredentials() => db.hasCredentials();
 
   static logout(BuildContext context) {
     _loggedOut = true;
+    _changeProviders(_currentRoute, "");
+    _currentRoute = "/home";
     db.clearData().then((b) {
       Navigator.popUntil(context, (route) => route.isFirst);
       Navigator.pushReplacementNamed(context, "/");
@@ -111,6 +115,8 @@ class Inject {
     if (route == "/behave") return [Api.BehaveEvents];
     if (route == "/timetable") return [Api.Timetable];
     if (route == "/maakav") return [Api.Maakav];
+    if (route == "/hatamot") return [Api.Hatamot];
+    if (route == "/hatamotBagrut") return [Api.HatamotBagrut];
     print("no apis on route \"$route\"");
     return [];
   }
@@ -133,6 +139,7 @@ class Inject {
     });
     p.forEach((api) => Inject.providers[api].clear());
   }
+
   static Widget getDrawer(BuildContext context) =>
       Drawer(
           child: ListView(padding: EdgeInsets.zero, children: <Widget>[
@@ -170,6 +177,17 @@ class Inject {
                 onTap: () {
                   closeDrawerAndNavigate(context, "/maakav");
                 }),
+            ListTile(
+                title: const Text("התאמות"),
+                onTap: () {
+                  closeDrawerAndNavigate(context, "/hatamot");
+                }),
+            ListTile(
+              title: const Text("התאמות בגרות"),
+              onTap: () {
+                closeDrawerAndNavigate(context, "/hatamotBagrut");
+              },
+            ),
             ListTile(
                 title: const Text("התנתק/י"),
                 onTap: () {
@@ -320,7 +338,7 @@ class Inject {
 
   static List<E> timetableDayProcess<E>(List<E> data, bool isDemo) {
     //the days of the mashov go from 1 to 7, not from 0 to 6.
-    List<Lesson> timetable = data.cast<Lesson>();
+    List<Lesson> timetable = List.from([...data]);
     if (isDemo) {
       if (today == 7) {
         //get some sleep on saturday!
@@ -338,18 +356,22 @@ class Inject {
         //just a normal day
         //setting temp variable just to avoid calculation of today a lot of times
         int day = today;
-        timetable.retainWhere((lesson) {
-          return lesson.day == day;
-        });
+        timetable = timetable.where((lesson) => lesson.day == day).toList();
       }
     }
+    //TODO: delete this ugly part and rewrite a better solution
+    //TODO: Bagrut grades Button
     if (today != 7) {
       timetable
           .sort((lesson1, lesson2) => lesson1.hour.compareTo(lesson2.hour));
       for (int i = 0; i < timetable.length - 1; i++) {
         if (timetable[i].hour == timetable[i + 1].hour) {
-          timetable[i].teachers.addAll(["|||", ...(timetable[i + 1].teachers)]);
-          timetable[i].subject += "|||${timetable[i + 1].subject}";
+          if (!timetable[i].teachers.contains(timetable[i + 1].teachers)) {
+            timetable[i]
+                .teachers
+                .addAll(["|||", ...(timetable[i + 1].teachers)]);
+            timetable[i].subject += "|||${timetable[i + 1].subject}";
+          }
           timetable.removeAt(i + 1);
         }
       }
@@ -361,6 +383,7 @@ class Inject {
     int day = DateTime
         .now()
         .weekday;
+    day = 2;
     return day == 7 ? 1 : day + 1;
   }
 
@@ -396,8 +419,10 @@ class Inject {
     return _downloadFile(maakavId, attachment);
   }
 
-  static Function() _requestApi(Api api) =>
-          () => refreshController.refresh(api);
+  static Function({Map additionalData}) _requestApi(Api api,
+      {Map additionalData}) =>
+          ({Map additionalData}) =>
+          refreshController.refresh(api, data: additionalData);
   static Map<Api, ApiProvider> providers = {
     Api.Grades: ApiProvider<Grade>(
         requestData: _requestApi(Api.Grades),
@@ -411,22 +436,27 @@ class Inject {
     Api.BehaveEvents: ApiProvider<BehaveEvent>(
         requestData: _requestApi(Api.BehaveEvents),
         overviewsBuilder: (events) {
-      int justified = 0,
-          unjustified = 0;
-      events.forEach((event) {
-        if (event.justificationId == 0 || event.justificationId == -1)
-          unjustified++;
-        else
-          justified++;
-      });
-      return {"מוצדקים": "$justified", "לא מוצדקים": "$unjustified"};
-    }),
+          int justified = 0,
+              unjustified = 0;
+          events.forEach((event) {
+            if (event.justificationId == 0 || event.justificationId == -1)
+              unjustified++;
+            else
+              justified++;
+          });
+          return {"מוצדקים": "$justified", "לא מוצדקים": "$unjustified"};
+        }),
     Api.Timetable: ApiProvider<Lesson>(
         requestData: _requestApi(Api.Timetable),
         overviewsBuilder: (lessons) =>
-        {"שעות להיום": "${lessons
-            .where((l) => l.day == today)
-            .length}"}),
+        {
+          "שעות להיום":
+          "${lessons
+              .where((l) => l.day == today)
+              .map((l) => l.hour)
+              .toSet()
+              .length}"
+        }),
     Api.Homework: ApiProvider<Homework>(
         requestData: _requestApi(Api.Homework),
         overviewsBuilder: (hw) => {"כמות": "${hw.length}"}),
@@ -436,15 +466,25 @@ class Inject {
     Api.Bagrut: ApiProvider<Bagrut>(
         requestData: _requestApi(Api.Bagrut),
         overviewsBuilder: (grades) {
-      List<int> testGrades =
-      grades.where((g) => g.testGrade > 0).map((g) => g.testGrade).toList();
-      return {
-        "כמות מבחנים": "${testGrades.length}",
-        "ממוצע": testGrades.length > 0 ? (testGrades.reduce((a, b) => a + b) /
-            testGrades.length)
-            .toStringAsPrecision(2) : ""
-      };
-    })
+          List<int> testGrades = grades
+              .where((g) => g.testGrade > 0)
+              .map((g) => g.testGrade)
+              .toList();
+          return {
+            "כמות מבחנים": "${testGrades.length}",
+            "ממוצע": testGrades.length > 0
+                ? (testGrades.reduce((a, b) => a + b) / testGrades.length)
+                .toStringAsPrecision(2)
+                : ""
+          };
+        }),
+    Api.Hatamot: ApiProvider<Hatama>(
+      overviewsBuilder: (hatamot) => {},
+      requestData: _requestApi(Api.Hatamot),
+    ),
+    Api.HatamotBagrut: ApiProvider<HatamatBagrut>(
+        overviewsBuilder: (hatamot) => {},
+        requestData: _requestApi(Api.HatamotBagrut))
   };
 
   static String bagrutDate(String date) {
@@ -464,7 +504,22 @@ class Inject {
         monthStr = "חורף";
         break;
     }
-    print("month is $month so monthstr is $monthStr");
+//    print("month is $month so monthstr is $monthStr");
     return "$year $monthStr";
+  }
+
+  static List<E> cloneTimetable<E>(List<E> data) {
+    List<Lesson> timetable = List.from(data);
+    return List.generate(timetable.length, (i) =>
+        Lesson(
+            groupId: timetable[i].groupId,
+            day: timetable[i].day,
+            hour: timetable[i].hour,
+            subject: "${timetable[i].subject}",
+            teachers: List.generate(
+                timetable[i].teachers.length, (j) => "${timetable[i]
+                .teachers[j]}"),
+            room: "${timetable[i].room}"
+        )).toList() as List<E>;
   }
 }

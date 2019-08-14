@@ -7,10 +7,13 @@ import 'package:unofficial_mashov/ui/data_list.dart';
 import 'package:unofficial_mashov/ui/overview_item.dart';
 
 class HomeRoute extends StatelessWidget {
-  final Widget todayList =
-  DataList<Lesson>(isDemo: true, builder: Inject.timetableBuilder());
+  final Widget todayList = DataList<Lesson>(
+      notFoundMessage: "אין שיעורים היום",
+      isDemo: true,
+      builder: Inject.timetableBuilder());
 
   final Widget homeworkList = DataList<Homework>(
+      notFoundMessage: "אין שיעורי בית",
       isDemo: true,
       builder: (BuildContext context, dynamic h) {
         Homework homework = h;
@@ -21,6 +24,7 @@ class HomeRoute extends StatelessWidget {
         );
       });
   final Widget gradesList = DataList<Grade>(
+      notFoundMessage: "אין ציונים",
       isDemo: true,
       builder: (BuildContext context, dynamic g) {
         Grade grade = g;

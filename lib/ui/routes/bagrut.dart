@@ -4,6 +4,7 @@ import 'package:unofficial_mashov/inject.dart';
 import 'package:unofficial_mashov/ui/data_list_page.dart';
 
 DataListPage<Bagrut> bagrutRoute(BuildContext context) => DataListPage<Bagrut>(
+    notFoundMessage: "לא נמצאו ציוני בגרויות",
     additionalData: {"overview": false},
     builder: (BuildContext context, dynamic g) {
       Bagrut grade = g;

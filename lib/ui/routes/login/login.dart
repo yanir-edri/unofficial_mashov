@@ -20,19 +20,29 @@ class LoginRouteState extends State<LoginRoute> {
     super.dispose();
   }
 
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Inject.hasCredentials()) {
+        _usernameController.text = Inject.db.username;
+        _passwordController.text = Inject.db.password;
+        showLoadingDialog(context);
+        Inject.tryLoginFromDB((isSuccessful) {
+          Navigator.pop(context);
+          if (isSuccessful) {
+            Navigator.pushReplacementNamed(context, '/home');
+          } else {
+            showFailedDialog();
+          }
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (Inject.hasCredentials()) {
-      _usernameController.text = Inject.db.username;
-      _passwordController.text = Inject.db.password;
-      Inject.tryLoginFromDB((isSuccessful) {
-        if (isSuccessful) {
-          Navigator.pushReplacementNamed(context, '/home');
-        } else {
-          showFailedDialog();
-        }
-      });
-    }
     Widget body = Form(
         key: _formKey,
         child: Column(
@@ -76,10 +86,12 @@ class LoginRouteState extends State<LoginRoute> {
                             // username is _usernameController.text
                             //password is _passwordController.text
                             //year is $year
+                            showLoadingDialog(context);
                             Inject.tryLogin(
                                 _usernameController.text,
                                 _passwordController.text,
                                     (isSuccessful) {
+                                  Navigator.pop(context);
                                   if (isSuccessful) {
                                     Navigator.pushReplacementNamed(
                                         context, '/home');
@@ -112,4 +124,12 @@ class LoginRouteState extends State<LoginRoute> {
           );
         });
   }
+
+  showLoadingDialog(BuildContext context) =>
+      showDialog(context: context,
+          barrierDismissible: false,
+          builder: (context) =>
+              Center(child: SizedBox(height: 40.0,
+                  width: 40.0,
+                  child: CircularProgressIndicator())));
 }

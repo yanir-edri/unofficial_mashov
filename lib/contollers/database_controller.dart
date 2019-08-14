@@ -100,7 +100,6 @@ class DatabaseController {
   set messagesCount(MessagesCount value) =>
       _prefs.setString("messagesCount", _countToJson(value));
 
-
   DatabaseController(SharedPreferences prefs) {
     ///it's easier to get it injected rather than messing it up trying to await it's future.
     _prefs = prefs;
@@ -108,24 +107,9 @@ class DatabaseController {
     fillPrefs();
   }
 
-  ///prefs:
-
   /// some nice utility functions
 
-  List<E> _parseList<E>(List list, Parser<E> parser) {
-    return list.map<E>((item) => parser(item)).toList();
-  }
-
-
-  Future<bool> hasConversation(String conversationId) =>
-      filesController
-          .getConversationFile(conversationId)
-          .then((file) => file.exists())
-          .catchError((error) => false);
-
-
-  Future<bool> hasEnoughData() =>
-      File(profilePicturePath).exists();
+  Future<bool> hasEnoughData() => File(profilePicturePath).exists();
 
   void fillPrefsWithEmptyStrings() {
     const keys = [

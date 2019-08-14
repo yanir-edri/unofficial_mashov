@@ -17,7 +17,7 @@ class RefreshController {
     _databaseController = Inject.db;
     _apiController.attachDataProcessor((dynamic data, Api api) {
       if (Inject.providers.containsKey(api)) {
-        Inject.providers[api].data = data;
+        Inject.providers[api].setData(data);
       }
       if (api == Api.Login) {
         _databaseController.setLoginData(data);
@@ -83,6 +83,12 @@ class RefreshController {
       case Api.Maakav:
         request = _apiController.getMaakav(userId);
         break;
+      case Api.Hatamot:
+        request = _apiController.getHatamot(userId);
+        break;
+      case Api.HatamotBagrut:
+        request = _apiController.getHatamotBagrut(userId);
+        break;
       default:
         break;
     }
@@ -106,8 +112,11 @@ class RefreshController {
   }
 
   Future<bool> loginDB() =>
-      login(_databaseController.school, _databaseController.username,
-          _databaseController.password, _databaseController.year);
+      login(
+          _databaseController.school,
+          _databaseController.username,
+          _databaseController.password,
+          _databaseController.year);
 
   Future<bool> login(School school, String username, String password, int year,
       {int tries: 1}) async {
@@ -143,7 +152,9 @@ class RefreshController {
             Api.Grades,
             Api.BehaveEvents,
             Api.Maakav,
-            Api.Bagrut
+            Api.Bagrut,
+            Api.Hatamot,
+            Api.HatamotBagrut
           ]);
           return true;
         } else {
@@ -167,7 +178,6 @@ class RefreshController {
             }
             print("trying to login again.");
             return login(school, username, password, year, tries: tries + 1);
-
           } else {
             //something bad happened
             print(
@@ -180,5 +190,4 @@ class RefreshController {
     }
     return Future.value(true);
   }
-
 }

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mashov_api/mashov_api.dart';
 import 'package:provider/provider.dart';
+import 'package:unofficial_mashov/inject.dart';
 import 'package:unofficial_mashov/providers/api_provider.dart';
-
-import '../../inject.dart';
 
 class TimeTable extends StatelessWidget {
   final List<Lesson> _lessons = List();
@@ -32,10 +31,8 @@ class TimeTable extends StatelessWidget {
             return Container(
                 child: ListView.builder(
                     itemBuilder: (context, j) =>
-                        Inject.timetableBuilder()(
-                            context, _map[i + 1][j]),
-                    itemCount: _map[i + 1].length)
-            );
+                        Inject.timetableBuilder()(context, _map[i + 1][j]),
+                    itemCount: _map[i + 1].length));
           }));
     }
     return CircularProgressIndicator();

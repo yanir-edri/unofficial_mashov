@@ -16,8 +16,15 @@ class ApiProvider<E> with ChangeNotifier {
   Map<String, String> getUnfilteredOverviews() => _buildOverviews(_cache);
 
   bool _requesting = false;
-  Function _requestData;
+  Function({Map additionalData}) _requestData;
 
+  String _error = "";
+
+  String get error => _error;
+
+  bool get hasError => _error.isNotEmpty;
+
+  bool get isRequesting => _requesting;
   requestData() {
     if (!_requesting) {
       print("requesting ${E}s");
@@ -26,14 +33,20 @@ class ApiProvider<E> with ChangeNotifier {
     }
   }
 
+  refresh() {
+    setData(List());
+    requestData();
+  }
+
   clear() {
     print("clearing ${E}s");
     _cache.clear();
     _filtered.clear();
   }
 
-  ApiProvider({@required Map<String, String> Function(List<
-      E> data) overviewsBuilder, @required Function requestData,
+  ApiProvider(
+      {@required Map<String, String> Function(List<E> data) overviewsBuilder,
+        @required Function requestData,
       List<E> Function(List<E> data) processor}) {
     _buildOverviews = overviewsBuilder;
     if (processor != null) {
@@ -48,12 +61,17 @@ class ApiProvider<E> with ChangeNotifier {
   //hold data. this could be used to display or not display a loading circle.
   bool get hasData => _cache.isNotEmpty;
 
-  set data(List<E> data) {
-    if (data == null || data.isEmpty) {
+  void setData(List<E> data, {String error = ""}) {
+    _requesting = false;
+    if (error.isNotEmpty) {
       print("set data is empty, returning on $E");
+      _cache = List();
+      _filtered = List();
+      _error = error;
+      notifyListeners();
       return;
     }
-    _requesting = false;
+    _error = "";
     if (_processor != null) {
       //might want to process the data, but not to filter it.
       //in this case, we'll use a processor.

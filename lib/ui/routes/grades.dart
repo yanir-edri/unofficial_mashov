@@ -4,7 +4,7 @@ import 'package:unofficial_mashov/inject.dart';
 import 'package:unofficial_mashov/ui/data_list_page.dart';
 
 DataListPage<Grade> gradesRoute(BuildContext context) => DataListPage<Grade>(
-    additionalData: {"overview": false},
+    notFoundMessage: "לא נמצאו ציונים",
     builder: (BuildContext context, dynamic g) {
       Grade grade = g;
       return ListTile(
@@ -43,9 +43,9 @@ DataListPage<Grade> gradesRoute(BuildContext context) => DataListPage<Grade>(
             List<Grade> grades = items.cast<Grade>();
             //to set in order to remove duplicates
             return Inject.displayDialog(
-                    grades.map((g) => g.subject).toSet().toList(),
-                    "מקצוע",
-                    context)
+                grades.map((g) => g.subject).toSet().toList(),
+                "מקצוע",
+                context)
                 .then((subject) {
               if (subject != null && subject.isNotEmpty)
                 grades = grades.where((g) => g.subject == subject).toList();
