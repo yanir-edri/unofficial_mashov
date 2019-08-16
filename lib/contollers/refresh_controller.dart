@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:mashov_api/mashov_api.dart';
 import 'package:unofficial_mashov/contollers/database_controller.dart';
 import 'package:unofficial_mashov/inject.dart';
+import 'package:unofficial_mashov/providers/api_provider.dart';
 
 class RefreshController {
   ApiController _apiController;
@@ -16,13 +17,16 @@ class RefreshController {
     _apiController = Inject.apiController;
     _databaseController = Inject.db;
     _apiController.attachDataProcessor((dynamic data, Api api) {
-      if (Inject.providers.containsKey(api)) {
+      if (api != Api.MessagesCount && Inject.providers.containsKey(api)) {
         Inject.providers[api].setData(data);
       }
       if (api == Api.Login) {
         _databaseController.setLoginData(data);
       } else if (api == Api.MessagesCount) {
-        _databaseController.messagesCount = data;
+        //had some weird casting problems
+        //but we're all good now
+        (Inject.providers[Api.MessagesCount] as ApiProvider<MessagesCount>)
+            .setData([data as MessagesCount]);
       }
     });
   }
@@ -154,7 +158,8 @@ class RefreshController {
             Api.Maakav,
             Api.Bagrut,
             Api.Hatamot,
-            Api.HatamotBagrut
+            Api.HatamotBagrut,
+            Api.MessagesCount
           ]);
           return true;
         } else {

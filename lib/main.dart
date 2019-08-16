@@ -32,7 +32,10 @@ void main() {
         builder: (_) => Inject.providers[Api.Hatamot],
       ),
       ChangeNotifierProvider<ApiProvider<HatamatBagrut>>(
-          builder: (_) => Inject.providers[Api.HatamotBagrut])
+          builder: (_) => Inject.providers[Api.HatamotBagrut]),
+      ChangeNotifierProvider<ApiProvider<MessagesCount>>(
+        builder: (_) => Inject.providers[Api.MessagesCount],
+      )
     ],
     child: MaterialApp(
         debugShowCheckedModeBanner: false,

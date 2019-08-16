@@ -359,7 +359,6 @@ class Inject {
         timetable = timetable.where((lesson) => lesson.day == day).toList();
       }
     }
-    //TODO: delete this ugly part and rewrite a better solution
     //TODO: Bagrut grades Button
     if (today != 7) {
       timetable
@@ -383,7 +382,6 @@ class Inject {
     int day = DateTime
         .now()
         .weekday;
-    day = 2;
     return day == 7 ? 1 : day + 1;
   }
 
@@ -423,12 +421,14 @@ class Inject {
       {Map additionalData}) =>
           ({Map additionalData}) =>
           refreshController.refresh(api, data: additionalData);
+
+
   static Map<Api, ApiProvider> providers = {
     Api.Grades: ApiProvider<Grade>(
         requestData: _requestApi(Api.Grades),
         overviewsBuilder: (grades) =>
         {
-          "כמות מבחנים": "${grades.length}",
+          "כמות מבחנים": "${grades.length > 0 ? grades.length : ""}",
           "ממוצע":
           "${grades.length > 0 ? (grades.map((g) => g.grade).reduce((a,
               b) => a + b) / grades.length).toStringAsPrecision(2) : ""}"
@@ -451,11 +451,12 @@ class Inject {
         overviewsBuilder: (lessons) =>
         {
           "שעות להיום":
-          "${lessons
+          "${lessons.length > 0 ?
+          lessons
               .where((l) => l.day == today)
               .map((l) => l.hour)
               .toSet()
-              .length}"
+              .length : ""}"
         }),
     Api.Homework: ApiProvider<Homework>(
         requestData: _requestApi(Api.Homework),
@@ -484,7 +485,14 @@ class Inject {
     ),
     Api.HatamotBagrut: ApiProvider<HatamatBagrut>(
         overviewsBuilder: (hatamot) => {},
-        requestData: _requestApi(Api.HatamotBagrut))
+        requestData: _requestApi(Api.HatamotBagrut)),
+    Api.MessagesCount: ApiProvider<MessagesCount>(
+        overviewsBuilder: (messagesCount) => {
+          "הודעות חדשות": "${messagesCount.length > 0 ? messagesCount.first
+              .newMessages : ""}"
+        },
+        requestData: _requestApi(Api.MessagesCount)
+    )
   };
 
   static String bagrutDate(String date) {

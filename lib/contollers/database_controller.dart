@@ -51,13 +51,6 @@ class DatabaseController {
 
   String get classFormatted => "$classCode\'$classNum";
 
-  MessagesCount get messagesCount {
-    String value = _prefs.getString("messagesCount");
-    if (value == null || value.isEmpty) return null;
-    return MessagesCount.fromJson(
-        json.decode(_prefs.getString("messagesCount")));
-  }
-
   set id(String value) => _prefs.setString("id", value);
 
   set password(String value) => _prefs.setString("password", value);
@@ -89,16 +82,6 @@ class DatabaseController {
   set classCode(String value) => _prefs.setString("classCode", value);
 
   set classNum(String value) => _prefs.setString("classNum", value);
-
-  String _countToJson(MessagesCount value) => """{
-    "allMessages": ${value.allMessages},
-    "inboxMessages": ${value.inboxMessages},
-    "newMessages": ${value.newMessages},
-    "unreadMessages": ${value.unreadMessages}
-  }""";
-
-  set messagesCount(MessagesCount value) =>
-      _prefs.setString("messagesCount", _countToJson(value));
 
   DatabaseController(SharedPreferences prefs) {
     ///it's easier to get it injected rather than messing it up trying to await it's future.

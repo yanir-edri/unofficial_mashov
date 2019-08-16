@@ -195,7 +195,10 @@ class HomeRoute extends StatelessWidget {
                     data: Provider.of<ApiProvider<Lesson>>(context)
                         .getUnfilteredOverviews()["שעות להיום"]),
                 Spacer(),
-                OverviewItem(title: "הודעות חדשות", data: "0"),
+                OverviewItem(
+                    title: "הודעות חדשות",
+                    data: Provider.of<ApiProvider<MessagesCount>>(context)
+                        .getUnfilteredOverviews()["הודעות חדשות"]),
                 Spacer()
               ],
             ),
