@@ -51,14 +51,23 @@ class HomeRoute extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    //The padding for the label above the data list
+    const EdgeInsets labelPadding = const EdgeInsets.only(
+        right: Inject.margin * 1.25,
+        top: Inject.margin
+    );
+    //The padding for the "see more" button
+    const EdgeInsets seeMorePadding = const EdgeInsets.only(
+        top: Inject.margin,
+        left: Inject.margin / 2
+    );
     GlobalKey<ScaffoldState> key = GlobalKey();
     List<Widget> bodyContent = <Widget>[
       //Grades list:
       Row(
         children: <Widget>[
           Padding(
-            padding: const EdgeInsets.only(
-                right: Inject.margin, left: Inject.margin, top: Inject.margin),
+            padding: labelPadding,
             child: Text("ציונים אחרונים:",
                 style: Theme
                     .of(context)
@@ -66,18 +75,21 @@ class HomeRoute extends StatelessWidget {
                     .title),
           ),
           Spacer(),
-          FlatButton(
-            child: Text("ראה עוד",
-                style: Theme
-                    .of(context)
-                    .textTheme
-                    .title
-                    .copyWith(color: Theme
-                    .of(context)
-                    .accentColor)),
-            onPressed: () {
-              Navigator.pushNamed(context, "/grades");
-            },
+          Padding(
+            padding: seeMorePadding,
+            child: FlatButton(
+              child: Text("ראה עוד",
+                  style: Theme
+                      .of(context)
+                      .textTheme
+                      .title
+                      .copyWith(color: Theme
+                      .of(context)
+                      .accentColor)),
+              onPressed: () {
+                Navigator.pushNamed(context, "/grades");
+              },
+            ),
           )
         ],
       ),
@@ -91,26 +103,28 @@ class HomeRoute extends StatelessWidget {
       Row(
         children: <Widget>[
           Padding(
-            padding: const EdgeInsets.only(
-                right: Inject.margin, left: Inject.margin, top: Inject.margin),
+            padding: labelPadding,
             child: Text("ש\"ב:", style: Theme
                 .of(context)
                 .textTheme
                 .title),
           ),
           Spacer(),
-          FlatButton(
-            child: Text("ראה עוד",
-                style: Theme
-                    .of(context)
-                    .textTheme
-                    .title
-                    .copyWith(color: Theme
-                    .of(context)
-                    .accentColor)),
-            onPressed: () {
-              workingOnIt(key);
-            },
+          Padding(
+            padding: seeMorePadding,
+            child: FlatButton(
+              child: Text("ראה עוד",
+                  style: Theme
+                      .of(context)
+                      .textTheme
+                      .title
+                      .copyWith(color: Theme
+                      .of(context)
+                      .accentColor)),
+              onPressed: () {
+                workingOnIt(key);
+              },
+            ),
           )
         ],
       ),
@@ -124,8 +138,7 @@ class HomeRoute extends StatelessWidget {
       Row(
         children: <Widget>[
           Padding(
-            padding: const EdgeInsets.only(
-                right: Inject.margin, left: Inject.margin, top: Inject.margin),
+            padding: labelPadding,
             child: Text("מערכת שעות יומית:",
                 style: Theme
                     .of(context)
@@ -133,18 +146,21 @@ class HomeRoute extends StatelessWidget {
                     .title),
           ),
           Spacer(),
-          FlatButton(
-            child: Text("כל המערכת",
-                style: Theme
-                    .of(context)
-                    .textTheme
-                    .title
-                    .copyWith(color: Theme
-                    .of(context)
-                    .accentColor)),
-            onPressed: () {
-              Navigator.pushNamed(context, '/timetable');
-            },
+          Padding(
+            padding: seeMorePadding,
+            child: FlatButton(
+              child: Text("כל המערכת",
+                  style: Theme
+                      .of(context)
+                      .textTheme
+                      .title
+                      .copyWith(color: Theme
+                      .of(context)
+                      .accentColor)),
+              onPressed: () {
+                Navigator.pushNamed(context, '/timetable');
+              },
+            ),
           )
         ],
       ),
@@ -154,7 +170,7 @@ class HomeRoute extends StatelessWidget {
           child: Center(child: Card(elevation: 2.0, child: todayList)),
           height: 300),
     ];
-    Scaffold test = Scaffold(
+    Scaffold scaffold = Scaffold(
       drawer: Inject.getDrawer(context),
       key: key,
       body: CustomScrollView(slivers: <Widget>[
@@ -164,7 +180,7 @@ class HomeRoute extends StatelessWidget {
         )
       ]),
     );
-    return Inject.rtl(test);
+    return Inject.rtl(scaffold);
   }
 
   void workingOnIt(GlobalKey<ScaffoldState> key) {
