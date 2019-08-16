@@ -22,7 +22,6 @@ class DataList<E> extends StatelessWidget {
     this.additionalData})
       : super(key: key);
 
-
   @override
   Widget build(BuildContext context) {
     ApiProvider<E> provider =
@@ -42,6 +41,44 @@ class DataList<E> extends StatelessWidget {
             itemCount: data.length,
             itemBuilder: (BuildContext context, int i) =>
                 builder(context, data[i]));
+      }
+      if ("$E" == "Bagrut") {
+        List<Bagrut> grades = data.cast<Bagrut>();
+        TextStyle colStyle = Theme
+            .of(context)
+            .textTheme
+            .title;
+        TextStyle valueStyle = Theme
+            .of(context)
+            .textTheme
+            .title
+            .copyWith(fontSize: 16);
+        return SliverToBoxAdapter(
+          child: Table(
+            columnWidths: {0: FractionColumnWidth(0.5)},
+            children: <TableRow>[
+              TableRow(children: <Widget>[
+                Text("מקצוע", style: colStyle, textAlign: TextAlign.center),
+                Text("שנתי", style: colStyle, textAlign: TextAlign.center),
+                Text("מבחן", style: colStyle, textAlign: TextAlign.center),
+                Text("סופי", style: colStyle, textAlign: TextAlign.center)
+              ]),
+              for (Bagrut g in grades)
+                TableRow(children: <Widget>[
+                  Container(margin: EdgeInsets.all(8), child: Text(g.name)),
+                  Container(margin: EdgeInsets.all(8),
+                      child: Text("${g.yearGrade}", style: valueStyle,
+                          textAlign: TextAlign.center)),
+                  Container(margin: EdgeInsets.all(8),
+                      child: Text("${g.testGrade}", style: valueStyle,
+                          textAlign: TextAlign.center)),
+                  Container(margin: EdgeInsets.all(8),
+                      child: Text("${g.finalGrade}", style: valueStyle,
+                          textAlign: TextAlign.center))
+                ])
+            ],
+          ),
+        );
       }
       return SliverList(
           delegate: SliverChildBuilderDelegate(

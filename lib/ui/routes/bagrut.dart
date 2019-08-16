@@ -1,34 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:mashov_api/mashov_api.dart';
-import 'package:unofficial_mashov/inject.dart';
 import 'package:unofficial_mashov/ui/data_list_page.dart';
 
 DataListPage<Bagrut> bagrutRoute(BuildContext context) => DataListPage<Bagrut>(
     notFoundMessage: "לא נמצאו ציוני בגרויות",
-    additionalData: {"overview": false},
-    builder: (BuildContext context, dynamic g) {
-      Bagrut grade = g;
-      return ListTile(
-          title: Column(
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Text(grade.name.length > 30
-                      ? "${grade.name.substring(0, 27).trimRight()}..."
-                      : grade.name.padRight(30)),
-                  Spacer(),
-                  Text("${grade.yearGrade}"),
-                  Spacer(),
-                  Text("${grade.testGrade}"),
-                  Spacer(),
-                  Text("${grade.finalGrade}"),
-                  Spacer()
-                ],
-              ),
-            ],
-          ),
-          subtitle: Text(Inject.bagrutDate(grade.moed)));
-    },
+    //we don't need to specify a builder because bagrut has a special builder function.
+    builder: (BuildContext context, dynamic g) => null,
     filters: [
       MenuFilter(
           label: "א'-ב'",

@@ -9,7 +9,6 @@ DataListPage<BehaveEvent> behaveRoute(BuildContext context) {
       titleStyle.copyWith(decoration: TextDecoration.lineThrough);
   return DataListPage<BehaveEvent>(
       notFoundMessage: "לא נמצאו אירועי התנהגות",
-      additionalData: {"overview": false},
       builder: (BuildContext context, dynamic e) {
         BehaveEvent event = e;
         return ListTile(
