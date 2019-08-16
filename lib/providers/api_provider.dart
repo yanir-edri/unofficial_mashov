@@ -16,7 +16,8 @@ class ApiProvider<E> with ChangeNotifier {
   Map<String, String> getUnfilteredOverviews() => _buildOverviews(_cache);
 
   bool _requesting = false;
-  Function({Map additionalData}) _requestData;
+  bool _refreshing = false;
+  Future<void> Function({Map additionalData}) _requestData;
 
   String _error = "";
 
@@ -25,23 +26,34 @@ class ApiProvider<E> with ChangeNotifier {
   bool get hasError => _error.isNotEmpty;
 
   bool get isRequesting => _requesting;
-  requestData() {
+
+  bool get isRefreshing => _refreshing;
+
+  Future<void> requestData({Map additionalData}) {
     if (!_requesting) {
-      print("requesting ${E}s");
-      _requestData();
       _requesting = true;
+      return _requestData(additionalData: additionalData);
     }
+    return Future.value(0);
   }
 
   refresh() {
-    setData(List());
-    requestData();
+    _refreshing = true;
+    _clear();
+    return requestData();
   }
 
+
   clear() {
-    print("clearing ${E}s");
     _cache.clear();
     _filtered.clear();
+  }
+
+  //this clear is used when refreshing
+  //we notify listeners too
+  _clear() {
+    clear();
+    notifyListeners();
   }
 
   ApiProvider(
@@ -63,6 +75,7 @@ class ApiProvider<E> with ChangeNotifier {
 
   void setData(List<E> data, {String error = ""}) {
     _requesting = false;
+    _refreshing = false;
     if (error.isNotEmpty) {
       print("set data is empty, returning on $E");
       _cache = List();
@@ -77,7 +90,7 @@ class ApiProvider<E> with ChangeNotifier {
       //in this case, we'll use a processor.
       _cache = _processor(_cache);
     } else {
-      _cache = data;
+      _cache = data.reversed.toList();
     }
     _filter(_cache).then((filtered) {
       _filtered = filtered;

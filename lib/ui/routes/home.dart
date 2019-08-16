@@ -19,7 +19,14 @@ class HomeRoute extends StatelessWidget {
         Homework homework = h;
         return ListTile(
           title: Text(homework.message),
-          subtitle: Text(homework.subject),
+          subtitle: Row(
+            children: <Widget>[
+              Text(homework.subject),
+              Spacer(),
+              Text(Inject.dateTimeToDateString(homework.date))
+            ],
+          ),
+
           /*isThreeLine: true,*/
         );
       });
@@ -52,15 +59,11 @@ class HomeRoute extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     //The padding for the label above the data list
-    const EdgeInsets labelPadding = const EdgeInsets.only(
-        right: Inject.margin * 1.25,
-        top: Inject.margin
-    );
+    const EdgeInsets labelPadding =
+    const EdgeInsets.only(right: Inject.margin * 1.25, top: Inject.margin);
     //The padding for the "see more" button
-    const EdgeInsets seeMorePadding = const EdgeInsets.only(
-        top: Inject.margin,
-        left: Inject.margin / 2
-    );
+    const EdgeInsets seeMorePadding =
+    const EdgeInsets.only(top: Inject.margin, left: Inject.margin / 2);
     GlobalKey<ScaffoldState> key = GlobalKey();
     List<Widget> bodyContent = <Widget>[
       //Grades list:

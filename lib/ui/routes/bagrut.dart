@@ -28,7 +28,12 @@ DataListPage<Bagrut> bagrutRoute(BuildContext context) => DataListPage<Bagrut>(
           icon: Icons.arrow_downward,
           filter: (items) {
             List<Bagrut> grades = items.cast<Bagrut>();
-            grades.sort((g1, g2) => g2.testGrade.compareTo(g1.testGrade));
+            grades.sort((g1, g2) {
+              int comp = g2.finalGrade.compareTo(g1.finalGrade);
+              if (comp == 0) comp = g2.testGrade.compareTo(g1.testGrade);
+              if (comp == 0) comp = g2.yearGrade.compareTo(g1.yearGrade);
+              return comp;
+            });
             return grades;
           }),
       MenuFilter(
@@ -36,7 +41,12 @@ DataListPage<Bagrut> bagrutRoute(BuildContext context) => DataListPage<Bagrut>(
           icon: Icons.arrow_upward,
           filter: (items) {
             List<Bagrut> grades = items.cast<Bagrut>();
-            grades.sort((g1, g2) => g1.testGrade.compareTo(g2.testGrade));
+            grades.sort((g1, g2) {
+              int comp = g1.finalGrade.compareTo(g2.finalGrade);
+              if (comp == 0) comp = g1.testGrade.compareTo(g2.testGrade);
+              if (comp == 0) comp = g1.yearGrade.compareTo(g2.yearGrade);
+              return comp;
+            });
             return grades;
           })
     ]);

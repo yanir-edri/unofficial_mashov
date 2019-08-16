@@ -33,14 +33,7 @@ class DataList<E> extends StatelessWidget {
         data = Inject.cloneTimetable(provider.data);
         data = Inject.timetableDayProcess(data, isDemo);
       } else if (isDemo) {
-        data = data.reversed.take(min(data.length, 5)).toList();
-      }
-      if (isDemo) {
-        return ListView.builder(
-            physics: ClampingScrollPhysics(),
-            itemCount: data.length,
-            itemBuilder: (BuildContext context, int i) =>
-                builder(context, data[i]));
+        data = data.take(min(data.length, 5)).toList();
       }
       if ("$E" == "Bagrut") {
         List<Bagrut> grades = data.cast<Bagrut>();
@@ -53,53 +46,92 @@ class DataList<E> extends StatelessWidget {
             .textTheme
             .title
             .copyWith(fontSize: 16);
-        return SliverToBoxAdapter(
-          child: Table(
-            columnWidths: {0: FractionColumnWidth(0.5)},
-            children: <TableRow>[
+        return ListView.builder(padding: EdgeInsets.zero,
+            itemCount: data.length + 1,
+            itemBuilder: (context, i) {
+              if (i == 0) {
+                return Container(
+                  margin: EdgeInsets.only(top: 8.0),
+                  child: Row(children: <Widget>[
+                    Expanded(flex: 3,
+                        child: Text("מקצוע", style: colStyle,
+                            textAlign: TextAlign.center)),
+                    Expanded(flex: 1,
+                        child: Text("שנתי", style: colStyle,
+                            textAlign: TextAlign.center)),
+                    Expanded(flex: 1,
+                        child: Text("מבחן", style: colStyle,
+                            textAlign: TextAlign.center)),
+                    Expanded(flex: 1,
+                        child: Text("סופי", style: colStyle,
+                            textAlign: TextAlign.center)),
+                  ],),
+                );
+              }
+              return Container(
+                margin: EdgeInsets.all(8.0),
+                child: Row(children: <Widget>[
+                  Expanded(flex: 3, child: Text(grades[i - 1].name)),
+                  Expanded(flex: 1,
+                      child: Text(
+                          "${grades[i - 1].yearGrade}", style: valueStyle,
+                          textAlign: TextAlign.center)),
+                  Expanded(flex: 1,
+                      child: Text(
+                          "${grades[i - 1].testGrade}", style: valueStyle,
+                          textAlign: TextAlign.center)),
+                  Expanded(flex: 1,
+                      child: Text(
+                          "${grades[i - 1].finalGrade}", style: valueStyle,
+                          textAlign: TextAlign.center)),
+                ]),
+              );
+            });
+        /*Table(
+          columnWidths: {0: FractionColumnWidth(0.5)},
+          children: <TableRow>[
+            TableRow(children: <Widget>[
+              Text("מקצוע", style: colStyle, textAlign: TextAlign.center),
+              Text("שנתי", style: colStyle, textAlign: TextAlign.center),
+              Text("מבחן", style: colStyle, textAlign: TextAlign.center),
+              Text("סופי", style: colStyle, textAlign: TextAlign.center)
+            ]),
+            for (Bagrut g in grades)
               TableRow(children: <Widget>[
-                Text("מקצוע", style: colStyle, textAlign: TextAlign.center),
-                Text("שנתי", style: colStyle, textAlign: TextAlign.center),
-                Text("מבחן", style: colStyle, textAlign: TextAlign.center),
-                Text("סופי", style: colStyle, textAlign: TextAlign.center)
-              ]),
-              for (Bagrut g in grades)
-                TableRow(children: <Widget>[
-                  Container(margin: EdgeInsets.all(8), child: Text(g.name)),
-                  Container(margin: EdgeInsets.all(8),
-                      child: Text("${g.yearGrade}", style: valueStyle,
-                          textAlign: TextAlign.center)),
-                  Container(margin: EdgeInsets.all(8),
-                      child: Text("${g.testGrade}", style: valueStyle,
-                          textAlign: TextAlign.center)),
-                  Container(margin: EdgeInsets.all(8),
-                      child: Text("${g.finalGrade}", style: valueStyle,
-                          textAlign: TextAlign.center))
-                ])
-            ],
-          ),
-        );
+                Container(margin: EdgeInsets.all(8), child: Text(g.name)),
+                Container(margin: EdgeInsets.all(8),
+                    child: Text("${g.yearGrade}", style: valueStyle,
+                        textAlign: TextAlign.center)),
+                Container(margin: EdgeInsets.all(8),
+                    child: Text("${g.testGrade}", style: valueStyle,
+                        textAlign: TextAlign.center)),
+                Container(margin: EdgeInsets.all(8),
+                    child: Text("${g.finalGrade}", style: valueStyle,
+                        textAlign: TextAlign.center))
+              ])
+          ],
+        );*/
       }
-      return SliverList(
-          delegate: SliverChildBuilderDelegate(
-                  (BuildContext context, int i) => builder(context, data[i]),
-              childCount: data.length));
+      return ListView.builder(
+          padding: EdgeInsets.zero,
+          itemCount: data.length,
+          itemBuilder: (BuildContext context, int i) =>
+              builder(context, data[i]));
     }
-    Widget w = Container();
     if (provider.hasError) {
-      w = Center(
+      return Center(
           child: Container(
               margin: EdgeInsets.all(16), child: Text(provider.error)));
     } else if (provider.isRequesting) {
-      w = Center(
+      if (provider.isRefreshing) return Container();
+      return Center(
         child: Container(
             margin: EdgeInsets.all(100), child: CircularProgressIndicator()),
       );
     } else {
-      w = Center(
+      return Center(
           child: Container(
               margin: EdgeInsets.all(16), child: Text(notFoundMessage)));
     }
-    return isDemo ? w : SliverToBoxAdapter(child: w);
   }
 }

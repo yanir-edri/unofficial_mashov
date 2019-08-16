@@ -159,6 +159,7 @@ class Inject {
             routeTile(context, "ציונים", "/grades"),
             routeTile(context, "ציוני בגרות", "/bagrut"),
             routeTile(context, "אירועי התנהגות", "/behave"),
+            routeTile(context, "שיעורי בית", "/homework"),
             routeTile(context, "מערכת שעות", "/timetable"),
             routeTile(context, "הערות מעקב", "/maakav"),
             routeTile(context, "התאמות", "/hatamot"),
@@ -392,7 +393,7 @@ class Inject {
     return _downloadFile(maakavId, attachment);
   }
 
-  static Function({Map additionalData}) _requestApi(Api api,
+  static Future<void> Function({Map additionalData}) _requestApi(Api api,
       {Map additionalData}) =>
           ({Map additionalData}) =>
           refreshController.refresh(api, data: additionalData);
@@ -433,10 +434,10 @@ class Inject {
         }),
     Api.Homework: ApiProvider<Homework>(
         requestData: _requestApi(Api.Homework),
-        overviewsBuilder: (hw) => {"כמות": "${hw.length}"}),
+        overviewsBuilder: (hw) => {}),
     Api.Maakav: ApiProvider<Maakav>(
         requestData: _requestApi(Api.Maakav),
-        overviewsBuilder: (mk) => {"הערות מעקב": "${mk.length}"}),
+        overviewsBuilder: (mk) => {}),
     Api.Bagrut: ApiProvider<Bagrut>(
         requestData: _requestApi(Api.Bagrut),
         overviewsBuilder: (grades) {

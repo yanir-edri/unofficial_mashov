@@ -31,28 +31,31 @@ class RefreshController {
     });
   }
 
-  bool refresh(Api api, {Map data}) {
+  Future<bool> refresh(Api api, {Map data}) async {
     print("refresh called with api $api\n");
     if (_shouldPerformLogin) {
       _queuedRequests.add(api);
       loginDB();
     }
     if (_runningRequests.contains(api) || _queuedRequests.contains(api))
-      return false;
+      return Future.value(false);
     if (_isPerformingLogin) {
       _queuedRequests.add(api);
-      return false;
+      return Future.value(false);
     } else {
-      _refreshInternal(api, data: data);
-      return true;
+      return _refreshInternal(api, data: data);
     }
   }
 
-  refreshAll(List<Api> apis, {Map data}) {
-    apis.forEach((api) => refresh(api, data: data));
+  Future<void> refreshAll(List<Api> apis, {Map<Api, Map> data}) {
+    if (data != null) {
+      return Future.wait(apis.map((api) =>
+          refresh(api, data: data.containsKey(api) ? data[api] : null)));
+    }
+    return Future.wait(apis.map((api) => refresh(api)));
   }
 
-  _refreshInternal(Api api, {Map data}) {
+  Future<bool> _refreshInternal(Api api, {Map data}) async {
     _runningRequests.add(api);
     Future<Result> request;
     String userId = _databaseController.userId;
@@ -97,10 +100,11 @@ class RefreshController {
         break;
     }
     if (request != null) {
-      request.then((result) {
+      return request.then((result) {
 //        print("request of api $api was ${result.isSuccess}");
         if (result.isSuccess) {
           _runningRequests.remove(api);
+          return true;
 //          _callbacks.forEach((c) => c.onSuccess(api));
         } else if (result.isNeedToLogin) {
           loginDB();
@@ -111,8 +115,10 @@ class RefreshController {
           _runningRequests.remove(api);
 //          _callbacks.forEach((c) => c.onFail(api));
         }
+        return false;
       });
     }
+    return Future.value(false);
   }
 
   Future<bool> loginDB() =>
@@ -150,18 +156,12 @@ class RefreshController {
           _shouldPerformLogin = false;
           _queuedRequests.forEach((api) => _refreshInternal(api));
           _queuedRequests.clear();
-          refreshAll([
+          return refreshAll([
             Api.Homework,
             Api.Timetable,
             Api.Grades,
-            Api.BehaveEvents,
-            Api.Maakav,
-            Api.Bagrut,
-            Api.Hatamot,
-            Api.HatamotBagrut,
             Api.MessagesCount
-          ]);
-          return true;
+          ]).then((_) => true);
         } else {
           print("Error logging in($tries): ${result.exception}");
           if (result.isNeedToLogin) {

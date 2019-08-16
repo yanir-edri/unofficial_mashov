@@ -35,7 +35,7 @@ class TimeTable extends StatelessWidget {
                     itemCount: _map[i + 1].length));
           }));
     }
-    return CircularProgressIndicator();
+    return Center(child: CircularProgressIndicator());
   }
 
   @override

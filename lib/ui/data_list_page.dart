@@ -48,46 +48,51 @@ class DataListPage<E> extends StatelessWidget {
     List<OverviewItem> overviews = List();
     provider
         .getFilteredOverviews()
-        .forEach((a, b) => overviews.add(OverviewItem(title: a, data: b)));
-    Widget body = CustomScrollView(
-      slivers: <Widget>[
-        overviews.length > 0
-            ? SliverAppBar(
-          //height needed to be exactly on the line of the drawer
-            expandedHeight: 161.0,
-            floating: false,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-                centerTitle: true,
-                background: Padding(
-                  padding: const EdgeInsets.only(top: 80.0),
-                  /*
+        .forEach((a, b) =>
+        overviews.add(OverviewItem(title: a, data: provider.hasData ? b : "")));
+    Widget test = NestedScrollView(
+      headerSliverBuilder: (context, innerBoxScrolled) =>
+      [overviews.length > 0
+          ? SliverAppBar(
+        //height needed to be exactly on the line of the drawer
+          expandedHeight: 161.0,
+          floating: false,
+          pinned: true,
+          flexibleSpace: FlexibleSpaceBar(
+              centerTitle: true,
+              background: Padding(
+                padding: const EdgeInsets.only(top: 80.0),
+                /*
                     This is problematic because this header is called a lot of times (every scroll)
                     and might cause some performance issues
                     might want to replace this in the future to something more performance-wise
                     this cannot be replaced with something static becuase filters might stream new data
                     and yet stream builder is.. not small
                     */
-                  child: Row(children: <Widget>[
-                    Spacer(),
-                    for (OverviewItem o in overviews) ...[o, Spacer()]
-                  ]),
-                )))
-            : SliverAppBar(
-          title: Text(title),
-        ),
-        DataList<E>(
+                child: Row(children: <Widget>[
+                  Spacer(),
+                  for (OverviewItem o in overviews) ...[o, Spacer()]
+                ]),
+              )))
+          : SliverAppBar(
+        title: Text(title),
+      )
+      ],
+      body: RefreshIndicator(
+        onRefresh: () {
+          return provider.refresh();
+        },
+        child: DataList<E>(
           builder: builder,
           isDemo: false,
           additionalData: additionalData,
           notFoundMessage: notFoundMessage,
-        )
-      ],
+        ),
+      ),
     );
-
     return Inject.rtl(Scaffold(
         drawer: Inject.getDrawer(context),
-        body: body,
+        body: test,
         floatingActionButton: filters != null
             ? FabMenu(
           mainIcon: Icons.filter_list,

@@ -4,6 +4,7 @@ import 'package:unofficial_mashov/inject.dart';
 import 'package:unofficial_mashov/ui/data_list_page.dart';
 
 DataListPage<Maakav> maakavRoute(BuildContext context) => DataListPage<Maakav>(
+  title: "הערות מעקב",
   notFoundMessage: "אין הערות מעקב",
   builder: (context, e) {
     Maakav event = e;

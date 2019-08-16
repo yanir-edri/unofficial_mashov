@@ -8,6 +8,7 @@ import 'package:unofficial_mashov/ui/routes/behave.dart';
 import 'package:unofficial_mashov/ui/routes/grades.dart';
 import 'package:unofficial_mashov/ui/routes/hatamot.dart';
 import 'package:unofficial_mashov/ui/routes/home.dart';
+import 'package:unofficial_mashov/ui/routes/homework.dart';
 import 'package:unofficial_mashov/ui/routes/login/login.dart';
 import 'package:unofficial_mashov/ui/routes/login/school.dart';
 import 'package:unofficial_mashov/ui/routes/maakav.dart';
@@ -47,6 +48,7 @@ void main() {
           '/home': (context) => HomeRoute(),
           '/grades': (context) => gradesRoute(context),
           '/behave': (context) => behaveRoute(context),
+          '/homework': (context) => homeworkRoute(context),
           '/timetable': (context) => TimeTable(),
           '/maakav': (context) => maakavRoute(context),
           '/bagrut': (context) => bagrutRoute(context),
