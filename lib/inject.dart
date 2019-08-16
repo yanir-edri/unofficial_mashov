@@ -116,6 +116,7 @@ class Inject {
     if (route == "/maakav") return [Api.Maakav];
     if (route == "/hatamot") return [Api.Hatamot];
     if (route == "/hatamotBagrut") return [Api.HatamotBagrut];
+    if (route == "/homework") return [Api.Homework];
     print("no apis on route \"$route\"");
     return [];
   }
@@ -139,6 +140,14 @@ class Inject {
     p.forEach((api) => Inject.providers[api].clear());
   }
 
+  static Widget routeTile(BuildContext context, String title, String route) =>
+      ListTile(
+        title: Text(title),
+        onTap: () {
+          closeDrawerAndNavigate(context, route);
+        },
+      );
+
   static Widget getDrawer(BuildContext context) =>
       Drawer(
           child: ListView(padding: EdgeInsets.zero, children: <Widget>[
@@ -146,47 +155,14 @@ class Inject {
                 accountName: Text(db.displayName),
                 accountEmail: Text(db.displayClass),
                 currentAccountPicture: getPicture()),
-            ListTile(
-                title: const Text("בית"),
-                onTap: () {
-                  closeDrawerAndNavigate(context, "/home");
-                }),
-            ListTile(
-                title: const Text("ציונים"),
-                onTap: () {
-                  closeDrawerAndNavigate(context, "/grades");
-                }),
-            ListTile(
-                title: const Text("ציוני בגרות"),
-                onTap: () {
-                  closeDrawerAndNavigate(context, "/bagrut");
-                }),
-            ListTile(
-                title: const Text("אירועי התנהגות"),
-                onTap: () {
-                  closeDrawerAndNavigate(context, "/behave");
-                }),
-            ListTile(
-                title: const Text("מערכת שעות"),
-                onTap: () {
-                  closeDrawerAndNavigate(context, "/timetable");
-                }),
-            ListTile(
-                title: const Text("הערות מעקב"),
-                onTap: () {
-                  closeDrawerAndNavigate(context, "/maakav");
-                }),
-            ListTile(
-                title: const Text("התאמות"),
-                onTap: () {
-                  closeDrawerAndNavigate(context, "/hatamot");
-                }),
-            ListTile(
-              title: const Text("התאמות בגרות"),
-              onTap: () {
-                closeDrawerAndNavigate(context, "/hatamotBagrut");
-              },
-            ),
+            routeTile(context, "בית", "/home"),
+            routeTile(context, "ציונים", "/grades"),
+            routeTile(context, "ציוני בגרות", "/bagrut"),
+            routeTile(context, "אירועי התנהגות", "/behave"),
+            routeTile(context, "מערכת שעות", "/timetable"),
+            routeTile(context, "הערות מעקב", "/maakav"),
+            routeTile(context, "התאמות", "/hatamot"),
+            routeTile(context, "התאמות בגרות", "/hatamotBagrut"),
             ListTile(
                 title: const Text("התנתק/י"),
                 onTap: () {
@@ -421,7 +397,6 @@ class Inject {
           ({Map additionalData}) =>
           refreshController.refresh(api, data: additionalData);
 
-
   static Map<Api, ApiProvider> providers = {
     Api.Grades: ApiProvider<Grade>(
         requestData: _requestApi(Api.Grades),
@@ -450,8 +425,7 @@ class Inject {
         overviewsBuilder: (lessons) =>
         {
           "שעות להיום":
-          "${lessons.length > 0 ?
-          lessons
+          "${lessons.length > 0 ? lessons
               .where((l) => l.day == today)
               .map((l) => l.hour)
               .toSet()
@@ -487,11 +461,10 @@ class Inject {
         requestData: _requestApi(Api.HatamotBagrut)),
     Api.MessagesCount: ApiProvider<MessagesCount>(
         overviewsBuilder: (messagesCount) => {
-          "הודעות חדשות": "${messagesCount.length > 0 ? messagesCount.first
-              .newMessages : ""}"
+          "הודעות חדשות":
+          "${messagesCount.length > 0 ? messagesCount.first.newMessages : ""}"
         },
-        requestData: _requestApi(Api.MessagesCount)
-    )
+        requestData: _requestApi(Api.MessagesCount))
   };
 
   static String bagrutDate(String date) {
@@ -517,16 +490,16 @@ class Inject {
 
   static List<E> cloneTimetable<E>(List<E> data) {
     List<Lesson> timetable = List.from(data);
-    return List.generate(timetable.length, (i) =>
-        Lesson(
+    return List.generate(
+        timetable.length,
+            (i) =>
+            Lesson(
             groupId: timetable[i].groupId,
             day: timetable[i].day,
             hour: timetable[i].hour,
             subject: "${timetable[i].subject}",
-            teachers: List.generate(
-                timetable[i].teachers.length, (j) => "${timetable[i]
-                .teachers[j]}"),
-            room: "${timetable[i].room}"
-        )).toList() as List<E>;
+                teachers: List.generate(timetable[i].teachers.length,
+                        (j) => "${timetable[i].teachers[j]}"),
+                room: "${timetable[i].room}")).toList() as List<E>;
   }
 }
