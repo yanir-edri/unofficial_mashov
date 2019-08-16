@@ -84,7 +84,6 @@ class Inject {
     db
       ..username = username
       ..password = password;
-
     return _refreshController.loginDB().then((isSuccess) {
       onComplete(isSuccess);
       return isSuccess;

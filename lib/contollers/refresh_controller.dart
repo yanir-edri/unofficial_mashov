@@ -193,6 +193,6 @@ class RefreshController {
         }
       });
     }
-    return Future.value(true);
+    return Future.value(false);
   }
 }

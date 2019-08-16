@@ -92,6 +92,7 @@ class LoginRouteState extends State<LoginRoute> {
                                 _passwordController.text,
                                     (isSuccessful) {
                                   Navigator.pop(context);
+                                  print("isSuccessful=$isSuccessful");
                                   if (isSuccessful) {
                                     Navigator.pushReplacementNamed(
                                         context, '/home');
