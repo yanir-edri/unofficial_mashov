@@ -45,6 +45,9 @@ class DataListPage<E> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ApiProvider<E> provider = Provider.of<ApiProvider<E>>(context);
+    if (!provider.hasData && !provider.isRequesting) {
+      provider.requestData(additionalData: additionalData);
+    }
     List<OverviewItem> overviews = List();
     provider
         .getFilteredOverviews()

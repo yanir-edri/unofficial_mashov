@@ -95,20 +95,21 @@ class Inject {
 
   static bool hasCredentials() => db.hasCredentials();
 
+  static List<String> _routesStack = ["/home"];
+
   static logout(BuildContext context) {
     _loggedOut = true;
-    _changeProviders(_currentRoute, "");
-    _currentRoute = "/home";
+    _changeProviders(_routesStack.last, "");
+    _routesStack = ["/home"];
     db.clearData().then((b) {
       Navigator.popUntil(context, (route) => route.isFirst);
       Navigator.pushReplacementNamed(context, "/");
     });
   }
 
-  static String _currentRoute = "/home";
-
   static List<Api> _routeToAPIs(String route) {
-    if (route == "/home") return [Api.Grades, Api.Homework, Api.Timetable];
+    if (route == "/home")
+      return [Api.Grades, Api.Homework, Api.Timetable, Api.MessagesCount];
     if (route == "/grades") return [Api.Grades];
     if (route == "/bagrut") return [Api.Bagrut];
     if (route == "/behave") return [Api.BehaveEvents];
@@ -127,14 +128,11 @@ class Inject {
     List<Api> p = List();
     //List all active providers
     p.addAll(_routeToAPIs(from));
-    //List all going-to-be active providers
+    //list all going-to-be active providers
     _routeToAPIs(to).forEach((api) {
       if (p.contains(api)) {
         //if already active, we won't need to clear them
         p.remove(api);
-      } else {
-        //if not active, we will want them to have data
-        Inject.providers[api].requestData();
       }
     });
     p.forEach((api) => Inject.providers[api].clear());
@@ -172,11 +170,10 @@ class Inject {
           ]));
 
   static void closeDrawerAndNavigate(BuildContext context, String route) {
-    _changeProviders(_currentRoute, route);
-    _currentRoute = route;
+//    _changeProviders(_routesStack.last, route);
+//    _routesStack.add(route);
     Navigator.pop(context);
-    //TODO: remove replacement and store route history so we could go back
-    Navigator.pushReplacementNamed(context, route);
+    Navigator.pushNamed(context, route);
   }
 
   //If picture is set, return it. Otherwise, return future builder
@@ -235,26 +232,6 @@ class Inject {
         body: Container(margin: EdgeInsets.all(16.0), child: w)));
   }
 
-  static PreferredSizeWidget appbar() =>
-      PreferredSize(
-          preferredSize: Size.fromHeight(150),
-          child: AppBar(
-              title: Column(
-                children: <Widget>[
-                  Center(child: Text("משוב")),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      children: <Widget>[
-                        Text("average"),
-                        Spacer(),
-                        Text("hours")
-                      ],
-                    ),
-                  )
-                ],
-              )));
-
   //turn YYYY-MM-DD'T'HH:MM:SS into DD/MM/YYYY
   static String dateTimeToDateString(DateTime d) =>
       d
@@ -267,20 +244,43 @@ class Inject {
 
   static const double margin = 24.0;
 
+  static String formatTime(String startTime, String endTime) {
+    StringBuffer builder = StringBuffer();
+    if (startTime.endsWith("00"))
+      builder.write(startTime.substring(0, startTime.length - 3));
+    else
+      builder.write(startTime);
+    builder.write("-");
+    if (endTime.endsWith("00"))
+      builder.write(endTime.substring(0, endTime.length - 3));
+    else
+      builder.write(endTime);
+    String result = builder.toString();
+    builder.clear();
+    return result;
+  }
+
   static Builder timetableBuilder() =>
           (BuildContext context, dynamic l) {
         Lesson lesson = l;
-        Widget Function(String subject, List<String> teachers) builder =
-            (String subject, List<String> teachers) =>
+        Widget Function(String subject, List<String> teachers, String time)
+        builder =
+            (String subject, List<String> teachers, String time) =>
             ListTile(
-                title: Text(subject),
+                title: Row(
+                  children: <Widget>[
+                    Text(subject),
+                    if (time.isNotEmpty) ...[Spacer(), Text(time)]
+                  ],
+                ),
                 subtitle: Text(teachers.join(", ")),
                 contentPadding: EdgeInsets.only(left: 4.0, right: 4.0));
         //if there is only one lesson, it should be right next to the hour.
         //otherwise, we want a spacer and a divider
         List<Widget> content = List();
         if (!lesson.subject.contains("|||")) {
-          content.add(builder(lesson.subject, lesson.teachers));
+          content.add(builder(lesson.subject, lesson.teachers,
+              formatTime(lesson.startTime, lesson.endTime)));
         } else {
           List<String> subjects = lesson.subject.split("|||");
           int teachersIndex = 0;
@@ -292,7 +292,8 @@ class Inject {
             }
             teachersIndex++;
             //add one to skip ||| for the next one
-            content.add(builder(subjects[i], teachers));
+            content.add(builder(subjects[i], teachers,
+                i == 0 ? formatTime(lesson.startTime, lesson.endTime) : ""));
           }
         }
         return ListTile(
@@ -316,27 +317,13 @@ class Inject {
     //the days of the mashov go from 1 to 7, not from 0 to 6.
     List<Lesson> timetable = List.from([...data]);
     if (isDemo) {
-      if (today == 7) {
-        //get some sleep on saturday!
-        timetable = [];
-        for (int i = 0; i < 6; i++) {
-          timetable.add(Lesson(
-              groupId: 0,
-              day: 7,
-              subject: "לישון",
-              hour: i + 1,
-              teachers: [],
-              room: ""));
-        }
-      } else {
-        //just a normal day
-        //setting temp variable just to avoid calculation of today a lot of times
-        int day = today;
-        timetable = timetable.where((lesson) => lesson.day == day).toList();
-      }
+      //just a normal day
+      //setting temp variable just to avoid calculation of today a lot of times
+      int day = today;
+      timetable = timetable.where((lesson) => lesson.day == day).toList();
     }
     //TODO: Bagrut grades Button
-    if (today != 7) {
+    if (timetable.isNotEmpty) {
       timetable
           .sort((lesson1, lesson2) => lesson1.hour.compareTo(lesson2.hour));
       for (int i = 0; i < timetable.length - 1; i++) {
@@ -433,11 +420,9 @@ class Inject {
               .length : ""}"
         }),
     Api.Homework: ApiProvider<Homework>(
-        requestData: _requestApi(Api.Homework),
-        overviewsBuilder: (hw) => {}),
+        requestData: _requestApi(Api.Homework), overviewsBuilder: (hw) => {}),
     Api.Maakav: ApiProvider<Maakav>(
-        requestData: _requestApi(Api.Maakav),
-        overviewsBuilder: (mk) => {}),
+        requestData: _requestApi(Api.Maakav), overviewsBuilder: (mk) => {}),
     Api.Bagrut: ApiProvider<Bagrut>(
         requestData: _requestApi(Api.Bagrut),
         overviewsBuilder: (grades) {
@@ -498,6 +483,8 @@ class Inject {
             groupId: timetable[i].groupId,
             day: timetable[i].day,
             hour: timetable[i].hour,
+                startTime: timetable[i].startTime,
+                endTime: timetable[i].endTime,
             subject: "${timetable[i].subject}",
                 teachers: List.generate(timetable[i].teachers.length,
                         (j) => "${timetable[i].teachers[j]}"),

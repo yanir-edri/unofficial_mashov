@@ -26,12 +26,13 @@ class TimeTable extends StatelessWidget {
         _map[i] = Inject.timetableDayProcess(
             _lessons.where((l) => l.day == i).toList(), false);
       }
+      var builder = Inject.timetableBuilder();
       return TabBarView(
           children: List.generate(_days.length, (i) {
             return Container(
                 child: ListView.builder(
                     itemBuilder: (context, j) =>
-                        Inject.timetableBuilder()(context, _map[i + 1][j]),
+                        builder(context, _map[i + 1][j]),
                     itemCount: _map[i + 1].length));
           }));
     }

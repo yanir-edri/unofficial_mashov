@@ -58,6 +58,12 @@ class HomeRoute extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    [Api.Grades, Api.Homework, Api.Timetable, Api.MessagesCount].forEach((api) {
+      if (!Inject.providers[api].hasData &&
+          !Inject.providers[api].isRequesting) {
+        Inject.providers[api].requestData();
+      }
+    });
     //The padding for the label above the data list
     const EdgeInsets labelPadding =
     const EdgeInsets.only(right: Inject.margin * 1.25, top: Inject.margin);

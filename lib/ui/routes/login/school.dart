@@ -6,12 +6,12 @@ import 'package:unofficial_mashov/inject.dart';
 class ChooseSchoolRoute extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    print("building schools route, schools size is ${Inject.schools.length}");
     return Inject.wrapper(Container(child: Form(child: _field(context))));
   }
 
   Widget _field(BuildContext context) {
     return TypeAheadField(
+      noItemsFoundBuilder: (ctxt) => Text(""),
       debounceDuration: Duration.zero,
       textFieldConfiguration: TextFieldConfiguration(
           autofocus: true,
