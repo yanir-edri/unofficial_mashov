@@ -85,6 +85,10 @@ class ApiProvider<E> with ChangeNotifier {
     }
     _error = "";
     _cache = data;
+    if (_cache.isEmpty) {
+      //this is to notify that there is no actual error, the list is simply empty.
+      _error = "-";
+    }
     if (_processor != null) {
       //might want to process the data, but not to filter it.
       //in this case, we'll use a processor.

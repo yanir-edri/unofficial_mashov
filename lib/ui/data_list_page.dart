@@ -58,7 +58,7 @@ class DataListPage<E> extends StatelessWidget {
       };
       _title = args.groupName;
     }
-    if (!provider.hasData && !provider.isRequesting) {
+    if (!provider.hasData && !provider.isRequesting && provider.error.isEmpty) {
       if ("$E" == "Contact") {
         print("id is ${_additionalData["id"]}");
       }

@@ -39,57 +39,68 @@ class DataList<E> extends StatelessWidget {
             .of(context)
             .textTheme
             .title;
-        TextStyle valueStyle = Theme
+        TextStyle valueStyle =
+        Theme
             .of(context)
             .textTheme
             .title
             .copyWith(fontSize: 16);
-        return ListView.builder(padding: EdgeInsets.zero,
+        return ListView.builder(
+            padding: EdgeInsets.zero,
             itemCount: data.length + 1,
             itemBuilder: (context, i) {
               if (i == 0) {
                 return Container(
                   margin: EdgeInsets.only(top: 8.0),
-                  child: Row(children: <Widget>[
-                    Expanded(flex: 3,
-                        child: Text("מקצוע", style: colStyle,
-                            textAlign: TextAlign.center)),
-                    Expanded(flex: 1,
-                        child: Text("שנתי", style: colStyle,
-                            textAlign: TextAlign.center)),
-                    Expanded(flex: 1,
-                        child: Text("מבחן", style: colStyle,
-                            textAlign: TextAlign.center)),
-                    Expanded(flex: 1,
-                        child: Text("סופי", style: colStyle,
-                            textAlign: TextAlign.center)),
-                  ],),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                          flex: 3,
+                          child: Text("מקצוע",
+                              style: colStyle, textAlign: TextAlign.center)),
+                      Expanded(
+                          flex: 1,
+                          child: Text("שנתי",
+                              style: colStyle, textAlign: TextAlign.center)),
+                      Expanded(
+                          flex: 1,
+                          child: Text("מבחן",
+                              style: colStyle, textAlign: TextAlign.center)),
+                      Expanded(
+                          flex: 1,
+                          child: Text("סופי",
+                              style: colStyle, textAlign: TextAlign.center)),
+                    ],
+                  ),
                 );
               }
               return Container(
                 margin: EdgeInsets.all(8.0),
                 child: Row(children: <Widget>[
                   Expanded(flex: 3, child: Text(grades[i - 1].name)),
-                  Expanded(flex: 1,
-                      child: Text(
-                          "${grades[i - 1].yearGrade}", style: valueStyle,
-                          textAlign: TextAlign.center)),
-                  Expanded(flex: 1,
-                      child: Text(
-                          "${grades[i - 1].testGrade}", style: valueStyle,
-                          textAlign: TextAlign.center)),
-                  Expanded(flex: 1,
-                      child: Text(
-                          "${grades[i - 1].finalGrade}", style: valueStyle,
-                          textAlign: TextAlign.center)),
+                  Expanded(
+                      flex: 1,
+                      child: Text("${grades[i - 1].yearGrade}",
+                          style: valueStyle, textAlign: TextAlign.center)),
+                  Expanded(
+                      flex: 1,
+                      child: Text("${grades[i - 1].testGrade}",
+                          style: valueStyle, textAlign: TextAlign.center)),
+                  Expanded(
+                      flex: 1,
+                      child: Text("${grades[i - 1].finalGrade}",
+                          style: valueStyle, textAlign: TextAlign.center)),
                 ]),
               );
             });
       }
       if (data.length == 0) {
-        return Center(
-            child: Container(
-                margin: EdgeInsets.all(16), child: Text(notFoundMessage)));
+        return ListView.builder(
+            itemBuilder: (c, i) =>
+                Container(
+                    margin: EdgeInsets.all(16),
+                    child: Center(child: Text(notFoundMessage))),
+            itemCount: 1);
       }
       return ListView.builder(
           padding: EdgeInsets.zero,
@@ -97,7 +108,7 @@ class DataList<E> extends StatelessWidget {
           itemBuilder: (BuildContext context, int i) =>
               builder(context, data[i]));
     }
-    if (provider.hasError) {
+    if (provider.hasError && provider.error != "-") {
       return Center(
           child: Container(
               margin: EdgeInsets.all(16), child: Text(provider.error)));
@@ -108,9 +119,12 @@ class DataList<E> extends StatelessWidget {
             margin: EdgeInsets.all(100), child: CircularProgressIndicator()),
       );
     } else {
-      return Center(
-          child: Container(
-              margin: EdgeInsets.all(16), child: Text(notFoundMessage)));
+      return ListView.builder(
+          itemBuilder: (c, i) =>
+              Container(
+                  margin: EdgeInsets.all(16),
+                  child: Center(child: Text(notFoundMessage))),
+          itemCount: 1);
     }
   }
 }
