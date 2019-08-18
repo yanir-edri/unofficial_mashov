@@ -3,6 +3,8 @@ import 'package:mashov_api/mashov_api.dart';
 import 'package:provider/provider.dart';
 import 'package:unofficial_mashov/inject.dart';
 import 'package:unofficial_mashov/providers/api_provider.dart';
+import 'package:unofficial_mashov/ui/routes/alfon/alfon.dart';
+import 'package:unofficial_mashov/ui/routes/alfon/groups.dart';
 import 'package:unofficial_mashov/ui/routes/bagrut.dart';
 import 'package:unofficial_mashov/ui/routes/behave.dart';
 import 'package:unofficial_mashov/ui/routes/grades.dart';
@@ -36,6 +38,11 @@ void main() {
           builder: (_) => Inject.providers[Api.HatamotBagrut]),
       ChangeNotifierProvider<ApiProvider<MessagesCount>>(
         builder: (_) => Inject.providers[Api.MessagesCount],
+      ),
+      ChangeNotifierProvider<ApiProvider<Group>>(
+          builder: (_) => Inject.providers[Api.Groups]),
+      ChangeNotifierProvider<ApiProvider<Contact>>(
+          builder: (_) => Inject.providers[Api.Alfon]
       )
     ],
     child: MaterialApp(
@@ -53,7 +60,9 @@ void main() {
           '/maakav': (context) => maakavRoute(context),
           '/bagrut': (context) => bagrutRoute(context),
           '/hatamot': (context) => hatamotRoute(context),
-          '/hatamotBagrut': (context) => hatamotBagrutRoute(context)
+          '/hatamotBagrut': (context) => hatamotBagrutRoute(context),
+          '/groups': (context) => groupsRoute(context),
+          '/contacts': (context) => alfonRoute(context)
         }),
   ));
 }

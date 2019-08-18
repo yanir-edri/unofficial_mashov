@@ -7,6 +7,7 @@ import 'package:unofficial_mashov/inject.dart';
 import 'package:unofficial_mashov/providers/api_provider.dart';
 import 'package:unofficial_mashov/ui/data_list.dart';
 import 'package:unofficial_mashov/ui/overview_item.dart';
+import 'package:unofficial_mashov/ui/routes/alfon/alfon.dart';
 
 typedef Builder = Widget Function(BuildContext context, dynamic item);
 typedef Filter = List Function(List data);
@@ -45,8 +46,23 @@ class DataListPage<E> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ApiProvider<E> provider = Provider.of<ApiProvider<E>>(context);
+    String _title = title;
+    Map _additionalData = additionalData;
+    if ("$E" == "Contact") {
+      AlfonArguments args = (ModalRoute
+          .of(context)
+          .settings
+          .arguments as AlfonArguments);
+      _additionalData = {
+        "id": args.id
+      };
+      _title = args.groupName;
+    }
     if (!provider.hasData && !provider.isRequesting) {
-      provider.requestData(additionalData: additionalData);
+      if ("$E" == "Contact") {
+        print("id is ${_additionalData["id"]}");
+      }
+      provider.requestData(additionalData: _additionalData);
     }
     List<OverviewItem> overviews = List();
     provider
@@ -54,6 +70,7 @@ class DataListPage<E> extends StatelessWidget {
         .forEach((a, b) =>
         overviews.add(OverviewItem(title: a, data: provider.hasData ? b : "")));
     Widget test = NestedScrollView(
+      physics: BouncingScrollPhysics(),
       headerSliverBuilder: (context, innerBoxScrolled) =>
       [overviews.length > 0
           ? SliverAppBar(
@@ -78,17 +95,16 @@ class DataListPage<E> extends StatelessWidget {
                 ]),
               )))
           : SliverAppBar(
-        title: Text(title),
+        title: Text(_title),
       )
       ],
       body: RefreshIndicator(
         onRefresh: () {
-          return provider.refresh();
+          return provider.refresh(additionalData: _additionalData);
         },
         child: DataList<E>(
           builder: builder,
           isDemo: false,
-          additionalData: additionalData,
           notFoundMessage: notFoundMessage,
         ),
       ),

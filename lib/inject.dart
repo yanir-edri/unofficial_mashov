@@ -95,12 +95,12 @@ class Inject {
 
   static bool hasCredentials() => db.hasCredentials();
 
-  static List<String> _routesStack = ["/home"];
+  static String _currentRoute = "/home";
 
   static logout(BuildContext context) {
     _loggedOut = true;
-    _changeProviders(_routesStack.last, "");
-    _routesStack = ["/home"];
+    _changeProviders(_currentRoute, "");
+    _currentRoute = "/home";
     db.clearData().then((b) {
       Navigator.popUntil(context, (route) => route.isFirst);
       Navigator.pushReplacementNamed(context, "/");
@@ -118,6 +118,8 @@ class Inject {
     if (route == "/hatamot") return [Api.Hatamot];
     if (route == "/hatamotBagrut") return [Api.HatamotBagrut];
     if (route == "/homework") return [Api.Homework];
+    if (route == "/groups") return [Api.Groups];
+    if (route == "/contacts") return [Api.Alfon];
     print("no apis on route \"$route\"");
     return [];
   }
@@ -135,6 +137,9 @@ class Inject {
         p.remove(api);
       }
     });
+    //since nothing else resets contacts, we have to do it here.
+    //might want to think of a better solution in the future.
+    if (to == "/contacts") Inject.providers[Api.Alfon].clear();
     p.forEach((api) => Inject.providers[api].clear());
   }
 
@@ -159,6 +164,7 @@ class Inject {
             routeTile(context, "אירועי התנהגות", "/behave"),
             routeTile(context, "שיעורי בית", "/homework"),
             routeTile(context, "מערכת שעות", "/timetable"),
+            routeTile(context, "אלפון", "/groups"),
             routeTile(context, "הערות מעקב", "/maakav"),
             routeTile(context, "התאמות", "/hatamot"),
             routeTile(context, "התאמות בגרות", "/hatamotBagrut"),
@@ -170,10 +176,14 @@ class Inject {
           ]));
 
   static void closeDrawerAndNavigate(BuildContext context, String route) {
-//    _changeProviders(_routesStack.last, route);
-//    _routesStack.add(route);
+    onNewRoute(route);
     Navigator.pop(context);
     Navigator.pushNamed(context, route);
+  }
+
+  static void onNewRoute(String route) {
+    _changeProviders(_currentRoute, route);
+    _currentRoute = route;
   }
 
   //If picture is set, return it. Otherwise, return future builder
@@ -450,7 +460,16 @@ class Inject {
           "הודעות חדשות":
           "${messagesCount.length > 0 ? messagesCount.first.newMessages : ""}"
         },
-        requestData: _requestApi(Api.MessagesCount))
+        requestData: _requestApi(Api.MessagesCount)),
+    Api.Groups: ApiProvider<Group>(
+        overviewsBuilder: (groups) => {}, requestData: _requestApi(Api.Groups)),
+    Api.Alfon: ApiProvider<Contact>(
+        overviewsBuilder: (c) => {},
+        requestData: _requestApi(Api.Alfon),
+        processor: (contacts) {
+          contacts.sort((c1, c2) => c1.familyName.compareTo(c2.familyName));
+          return contacts;
+        })
   };
 
   static String bagrutDate(String date) {

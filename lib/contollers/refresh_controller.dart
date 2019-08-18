@@ -61,7 +61,7 @@ class RefreshController {
     String userId = _databaseController.userId;
     switch (api) {
       case Api.Alfon:
-        request = _apiController.getContacts(userId, data["group"] ?? "-1");
+        request = _apiController.getContacts(userId, data["id"] ?? "-1");
         break;
       case Api.Bagrut:
         request = _apiController.getBagrut(userId);
@@ -156,12 +156,9 @@ class RefreshController {
           _shouldPerformLogin = false;
           _queuedRequests.forEach((api) => _refreshInternal(api));
           _queuedRequests.clear();
-          return refreshAll([
-            Api.Homework,
-            Api.Timetable,
-            Api.Grades,
-            Api.MessagesCount
-          ]).then((_) => true);
+          return refreshAll(
+              [Api.Homework, Api.Timetable, Api.Grades, Api.MessagesCount])
+              .then((_) => true);
         } else {
           print("Error logging in($tries): ${result.exception}");
           if (result.isNeedToLogin) {

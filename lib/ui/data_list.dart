@@ -11,15 +11,13 @@ typedef Builder = Widget Function(BuildContext context, dynamic item);
 
 class DataList<E> extends StatelessWidget {
   final Builder builder;
-  final Map additionalData;
   final bool isDemo;
   final String notFoundMessage;
 
   DataList({Key key,
     @required this.builder,
     @required this.isDemo,
-    @required this.notFoundMessage,
-    this.additionalData})
+    @required this.notFoundMessage})
       : super(key: key);
 
   @override
