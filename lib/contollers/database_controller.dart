@@ -39,8 +39,8 @@ class DatabaseController {
   bool get pictureSet => _prefs.getBool("pictureSet") ?? false;
 
   School get school {
-    String src = _prefs.getString("school") ?? "";
-    return src.isNotEmpty ? School.fromJson(json.decode(src)) : null;
+    String src = _prefs.getString("school");
+    return src != "null" ? School.fromJson(json.decode(src)) : null;
   }
 
   int get year => _prefs.getInt("year") ?? -1;

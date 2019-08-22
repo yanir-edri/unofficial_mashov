@@ -20,6 +20,9 @@ class Inject {
   static bool _loginCredentialsSaved = false;
   static bool _loggedOut = false;
 
+  static School selectedSchool;
+  static int selectedYear;
+
   static Future<bool> isConnected() =>
       Connectivity()
           .checkConnectivity()
@@ -67,9 +70,8 @@ class Inject {
   static List<School> _schools;
 
   static setYearAndSchool(School school, int year) {
-    db
-      ..school = school
-      ..year = year;
+    selectedSchool = school;
+    selectedYear = year;
   }
 
   static List<School> getSuggestions(String pattern) =>
@@ -80,18 +82,25 @@ class Inject {
           .toList();
 
   static Future<bool> tryLogin(String username, String password,
-      void onComplete(bool success)) {
-    db
-      ..username = username
-      ..password = password;
-    return _refreshController.loginDB().then((isSuccess) {
+      bool rememberMe, void onComplete(bool success)) {
+    return _refreshController.login(username, password).then((isSuccess) {
+      if (rememberMe) {
+        db
+          ..school = Inject.selectedSchool
+          ..username = username
+          ..password = password
+          ..year = Inject.selectedYear;
+      }
       onComplete(isSuccess);
       return isSuccess;
     });
   }
 
-  static Future<bool> tryLoginFromDB(void onComplete(bool success)) =>
-      tryLogin(db.username, db.password, onComplete);
+  static Future<bool> tryLoginFromDB(void onComplete(bool success)) {
+    Inject.selectedYear = db.year;
+    Inject.selectedSchool = db.school;
+    return tryLogin(db.username, db.password, true, onComplete);
+  }
 
   static bool hasCredentials() => db.hasCredentials();
 

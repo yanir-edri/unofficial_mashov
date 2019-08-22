@@ -122,13 +122,23 @@ class RefreshController {
   }
 
   Future<bool> loginDB() =>
-      login(
+      _login(
           _databaseController.school,
           _databaseController.username,
           _databaseController.password,
           _databaseController.year);
 
-  Future<bool> login(School school, String username, String password, int year,
+  Future<bool> login(String username, String password) {
+    //assuming we have school and year inside db
+    if (Inject.selectedSchool == null || Inject.selectedYear == null) {
+      print("inject selected school or year is null? returning false on login");
+      return Future.value(false);
+    }
+    return _login(
+        Inject.selectedSchool, username, password, Inject.selectedYear);
+  }
+
+  Future<bool> _login(School school, String username, String password, int year,
       {int tries: 1}) async {
     if (!_isPerformingLogin) {
       _isPerformingLogin = true;
@@ -147,11 +157,7 @@ class RefreshController {
             ..classCode = student.classCode
             ..classNum = student.classNum.toString()
             ..privateName = student.privateName
-            ..familyName = student.familyName
-            ..school = school
-            ..username = username
-            ..password = password
-            ..year = year;
+            ..familyName = student.familyName;
           _isPerformingLogin = false;
           _shouldPerformLogin = false;
           _queuedRequests.forEach((api) => _refreshInternal(api));
@@ -179,7 +185,7 @@ class RefreshController {
               return false;
             }
             print("trying to login again.");
-            return login(school, username, password, year, tries: tries + 1);
+            return _login(school, username, password, year, tries: tries + 1);
           } else {
             //something bad happened
             print(

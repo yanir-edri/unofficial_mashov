@@ -12,6 +12,8 @@ class LoginRouteState extends State<LoginRoute> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool rememberMe = false;
+  bool hasCredentials = false;
 
   @override
   void dispose() {
@@ -19,7 +21,6 @@ class LoginRouteState extends State<LoginRoute> {
     _passwordController.dispose();
     super.dispose();
   }
-
 
   @override
   void initState() {
@@ -71,6 +72,16 @@ class LoginRouteState extends State<LoginRoute> {
                   },
                   obscureText: true),
               Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: _CheckBoxButton(
+                  initialValue: Inject.hasCredentials(),
+                  text: "זכור סיסמה",
+                  onChanged: (v) {
+                    rememberMe = v;
+                  },
+                ),
+              ),
+              Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: Center(
                       child: RaisedButton(
@@ -90,16 +101,16 @@ class LoginRouteState extends State<LoginRoute> {
                             Inject.tryLogin(
                                 _usernameController.text,
                                 _passwordController.text,
-                                    (isSuccessful) {
-                                  Navigator.pop(context);
-                                  print("isSuccessful=$isSuccessful");
-                                  if (isSuccessful) {
-                                    Navigator.pushReplacementNamed(
-                                        context, '/home');
-                                  } else {
-                                    showFailedDialog();
-                                  }
-                                });
+                                rememberMe, (isSuccessful) {
+                              Navigator.pop(context);
+                              print("isSuccessful=$isSuccessful");
+                              if (isSuccessful) {
+                                Navigator.pushReplacementNamed(
+                                    context, '/home');
+                              } else {
+                                showFailedDialog();
+                              }
+                            });
                           }
                         },
                         child: Text('התחבר'),
@@ -127,10 +138,53 @@ class LoginRouteState extends State<LoginRoute> {
   }
 
   showLoadingDialog(BuildContext context) =>
-      showDialog(context: context,
+      showDialog(
+          context: context,
           barrierDismissible: false,
           builder: (context) =>
-              Center(child: SizedBox(height: 40.0,
-                  width: 40.0,
-                  child: CircularProgressIndicator())));
+              Center(
+                  child: SizedBox(
+                      height: 40.0,
+                      width: 40.0,
+                      child: CircularProgressIndicator())));
+}
+
+class _CheckBoxButton extends StatefulWidget {
+  final String text;
+  final Function(bool active) onChanged;
+  final bool initialValue;
+
+  _CheckBoxButton({@required this.text,
+    @required this.onChanged,
+    @required this.initialValue});
+
+  @override
+  _CheckBoxButtonState createState() {
+    return _CheckBoxButtonState(initialValue: initialValue);
+  }
+}
+
+class _CheckBoxButtonState extends State<_CheckBoxButton> {
+  bool _active;
+
+  _CheckBoxButtonState({@required bool initialValue}) {
+    _active = initialValue;
+  }
+
+  changeActiveState(bool newState) {
+    setState(() {
+      _active = newState;
+    });
+    widget.onChanged(newState);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Checkbox(value: _active, onChanged: changeActiveState),
+        Text(widget.text)
+      ],
+    );
+  }
 }
